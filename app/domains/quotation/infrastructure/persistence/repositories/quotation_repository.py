@@ -107,7 +107,7 @@ class SqlAlchemyQuotationRepository(QuotationRepository):
             for package_data in quotation_data.packages:
                 self._persist_package(quotation=quotation, data=package_data)
 
-            self.session.commit()
+            self.session.flush()
             return quotation
         except Exception:
             logger.error("Failed to persist quotation %r", knowledge.quotation.quotation_code, exc_info=True)

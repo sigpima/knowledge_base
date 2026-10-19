@@ -134,3 +134,24 @@ def test_bom_and_nfd_text_normalized():
 
     assert loaded.quotation.packages[0].work_items[1].name == "Chống thấm sân thượng"
     assert unicodedata.is_normalized("NFC", loaded.quotation.packages[0].work_items[1].name)
+
+
+def test_warranty_requires_every_field_the_database_requires():
+    def mutate(d):
+        del d["quotation"]["warranty"]["extend_period"]
+
+    assert any(e.startswith("quotation.warranty.extend_period") for e in _errors(_mutated(mutate)))
+
+
+def test_payment_term_requires_percentage_and_trigger():
+    def mutate(d):
+        del d["quotation"]["payment_terms"][0]["percentage"]
+
+    assert any(e.startswith("quotation.payment_terms[0].percentage") for e in _errors(_mutated(mutate)))
+
+
+def test_term_type_longer_than_column_rejected():
+    def mutate(d):
+        d["quotation"]["scope_terms"][0]["term_type"] = "X" * 11
+
+    assert any(e.startswith("quotation.scope_terms[0].term_type") for e in _errors(_mutated(mutate)))

@@ -43,24 +43,26 @@ class PackageSpec(_Spec):
     work_items: list[WorkItemSpec]
 
 
+# Các cột điều khoản (phạm vi/thanh toán/bảo hành) là NOT NULL và có độ dài giới
+# hạn trong DB, nên file YAML phải bắt buộc và giới hạn tương ứng.
 class ScopeTermSpec(_Spec):
-    scope_type: str
-    term_type: str
-    description: str
+    scope_type: str = Field(max_length=20)
+    term_type: str = Field(max_length=10)
+    description: str = Field(max_length=255)
     amount: Decimal | None = None
 
 
 class PaymentTermSpec(_Spec):
-    percentage: Decimal | None = None
-    trigger_type: str | None = None
-    trigger_description: str | None = None
+    percentage: Decimal
+    trigger_type: str = Field(max_length=10)
+    trigger_description: str = Field(max_length=255)
 
 
 class WarrantySpec(_Spec):
-    period: int | None = None
-    period_unit: str | None = None
-    extend_percent: Decimal | None = None
-    extend_period: int | None = None
+    period: int
+    period_unit: str = Field(max_length=10)
+    extend_percent: Decimal
+    extend_period: int
 
 
 class QuotationSpec(_Spec):

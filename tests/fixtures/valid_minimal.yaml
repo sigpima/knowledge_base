@@ -53,6 +53,8 @@ quotation:
   warranty:
     period: 24
     period_unit: tháng
+    extend_percent: 0
+    extend_period: 0
 
 extras:
   - issue_date: 2026-04-02

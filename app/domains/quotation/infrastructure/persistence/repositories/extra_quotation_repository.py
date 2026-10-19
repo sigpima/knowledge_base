@@ -33,7 +33,7 @@ class SqlAlchemyExtraQuotationRepository(ExtraQuotationRepository):
                 extra_metadata=data.metadata,
             )
             self.session.add(model)
-            self.session.commit()
+            self.session.flush()
             return self._to_data(model)
         except Exception:
             logger.error("Failed to save extra quotation for project %r", project_id, exc_info=True)

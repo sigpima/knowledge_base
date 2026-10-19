@@ -151,7 +151,7 @@ class SqlAlchemyEstimationRepository(EstimationRepository):
                     total_price_round=product.total_price_round,
                 ))
 
-            self.session.commit()
+            self.session.flush()
         except Exception:
             logger.error("Failed to write dự toán bundle for project_id=%r", project_id, exc_info=True)
             self.session.rollback()
