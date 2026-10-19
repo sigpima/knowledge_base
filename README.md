@@ -67,7 +67,7 @@ python3 -m scripts.mcp_call run_readonly_sql '{"query": "SELECT name FROM quotat
 ```
 
 Mật khẩu mặc định (`demo-password`, `demo-readonly`) chỉ dành cho demo trên máy cá nhân; đặt `POSTGRES_PASSWORD` và
-`RO_PASSWORD` để đổi, xem `docker-compose.yml`. Dừng và xoá dữ liệu: `docker compose down -v`.
+`RO_PASSWORD` để đổi, xem `docker-compose.yml`. Mỗi lần chạy `docker compose up`, bước seed xoá sạch rồi nạp lại dữ liệu mẫu từ `data/sample`, nên công trình bạn tự nhập qua `/ingest` sẽ mất; muốn giữ, đừng chạy lại seed. Dừng và xoá dữ liệu: `docker compose down -v`.
 
 ## Nối vào agent của bạn
 

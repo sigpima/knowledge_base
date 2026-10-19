@@ -21,3 +21,18 @@ def test_startup_logs_database_initialization(caplog):
             pass
 
     assert "Initializing database" in caplog.text
+
+
+def test_run_binds_to_the_configured_host_which_defaults_to_loopback(monkeypatch):
+    import uvicorn
+
+    from app.infrastructure.config.config import Settings
+    from app.interfaces.http import api
+
+    calls = []
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: calls.append(kwargs))
+
+    api.run(port=8123)
+
+    assert Settings(_env_file=None).api_host == "127.0.0.1"
+    assert calls == [{"host": api.settings.api_host, "port": 8123}]

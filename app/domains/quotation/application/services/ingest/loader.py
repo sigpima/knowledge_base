@@ -1,5 +1,6 @@
 """Đọc và kiểm tra file YAML báo giá; lỗi nêu rõ vị trí trong file."""
 import unicodedata
+from collections.abc import Hashable
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
+from .column_limits import check_column_limits
 from .concepts import CONCEPT_VOCABULARY
 from .schema import QuotationFile
 
@@ -25,7 +27,20 @@ class QuotationFileError(ValueError):
 
 
 class _SafeQuotationLoader(yaml.SafeLoader):
-    """SafeLoader không cho alias (chống alias bomb) và đọc số thập phân thành Decimal."""
+    """SafeLoader không cho alias (chống alias bomb), không cho khoá lặp, và đọc số thập phân thành Decimal."""
+
+    def construct_mapping(self, node, deep=False):
+        seen = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=True)
+            if isinstance(key, Hashable):
+                if key in seen:
+                    raise yaml.constructor.ConstructorError(
+                        None, None, f"khoá {key!r} bị lặp trong cùng một mapping (giá trị sau sẽ ghi đè âm thầm)",
+                        key_node.start_mark,
+                    )
+                seen.add(key)
+        return super().construct_mapping(node, deep)
 
     def compose_node(self, parent, index):
         if self.check_event(yaml.events.AliasEvent):
@@ -80,6 +95,7 @@ def _semantic_errors(file: QuotationFile) -> list[str]:
             else:
                 seen[item.key] = (p_index, w_index)
                 items_by_key[item.key] = item
+            seen_concepts: set[tuple[str, str]] = set()
             for c_index, concept in enumerate(item.concepts):
                 allowed = CONCEPT_VOCABULARY.get(concept.type)
                 if allowed is None or concept.name not in allowed:
@@ -87,12 +103,27 @@ def _semantic_errors(file: QuotationFile) -> list[str]:
                         f"{base}.concepts[{c_index}]: concept ({concept.type!r}, {concept.name!r}) "
                         f"không nằm trong danh sách cho phép"
                     )
+                pair = (concept.type, concept.name)
+                if pair in seen_concepts:
+                    errors.append(f"{base}.concepts[{c_index}]: concept {pair} bị trùng trong cùng một hạng mục")
+                seen_concepts.add(pair)
+            if sum(1 for c in item.concepts if c.type == "category") > 1:
+                errors.append(f"{base}.concepts: mỗi hạng mục chỉ được có tối đa một concept loại 'category'")
 
     estimation = file.estimation
     if estimation is not None:
+        first_index_by_key: dict[str, int] = {}
         for i, est_item in enumerate(estimation.items):
             if est_item.work_item is not None and est_item.work_item not in items_by_key:
                 errors.append(f"estimation.items[{i}].work_item: không có hạng mục nào có key {est_item.work_item!r}")
+            elif est_item.work_item is not None:
+                if est_item.work_item in first_index_by_key:
+                    errors.append(
+                        f"estimation.items[{i}].work_item: hạng mục {est_item.work_item!r} bị trùng, đã có mục dự toán "
+                        f"estimation.items[{first_index_by_key[est_item.work_item]}]; gộp thành một dòng"
+                    )
+                else:
+                    first_index_by_key[est_item.work_item] = i
         for i, sub in enumerate(estimation.sub_materials):
             for j, usage in enumerate(sub.usages):
                 if usage.work_item is not None and usage.work_item not in items_by_key:
@@ -137,6 +168,8 @@ def load_quotation_text(text: str, source_name: str = "") -> QuotationFile:
         raise QuotationFileError([f"<file>: YAML không hợp lệ: {exc}"], source_name) from exc
     except RecursionError as exc:
         raise QuotationFileError(["<file>: YAML lồng quá sâu"], source_name) from exc
+    except ValueError as exc:  # ví dụ số nguyên hơn 4300 chữ số
+        raise QuotationFileError([f"<file>: giá trị không hợp lệ: {exc}"], source_name) from exc
     if not isinstance(raw, dict):
         raise QuotationFileError(["<file>: nội dung gốc phải là một mapping YAML"], source_name)
 
@@ -146,7 +179,12 @@ def load_quotation_text(text: str, source_name: str = "") -> QuotationFile:
         errors = [f"{_format_path(tuple(e['loc']))}: {e['msg']}" for e in exc.errors()]
         raise QuotationFileError(errors, source_name) from exc
 
-    errors = _semantic_errors(file)
+    errors = check_column_limits(file)  # trước các phép tính tổng, để số quá lớn không làm tràn Decimal
+    if not errors:
+        try:
+            errors = _semantic_errors(file)
+        except ArithmeticError as exc:
+            errors = [f"<file>: số quá lớn để tính tổng: {exc}"]
     if errors:
         raise QuotationFileError(errors, source_name)
 

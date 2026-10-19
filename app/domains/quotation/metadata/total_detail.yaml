@@ -19,7 +19,7 @@ columns:
       thường là một trong: "vật tư chính", "vật tư phụ", "nhân công",
       "chi phí khác" (giàn giáo, xử lý bề mặt đặc biệt nằm ngoài các gói
       chính -- không có sub_material riêng cho các khoản này), "chi phí bảo
-      hành", "lợi nhuận thuần", "Incentive", "lợi nhuận cuối".
+      hành", "lợi nhuận thuần".
     semantic_type: category
   name:
     description: Tên hiển thị của dòng chi phí (thường trùng hoặc gần với type).

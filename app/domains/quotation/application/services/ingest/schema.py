@@ -5,9 +5,11 @@ Mô tả đầy đủ cho người dùng: docs/data-format.md.
 """
 from datetime import date
 from decimal import Decimal
-from typing import Any
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
+
+Int32 = Annotated[int, Field(ge=0, le=2**31 - 1)]
 
 
 class _Spec(BaseModel):
@@ -21,7 +23,6 @@ class ConceptRef(_Spec):
 
 class StepSpec(_Spec):
     name: str
-    description: str | None = None
     product_name: str | None = None
     layers: int | None = None
     note: str | None = None
@@ -79,7 +80,7 @@ class QuotationSpec(_Spec):
 class ProjectSpec(_Spec):
     name: str
     address: str
-    estimated_workdays: list[int] | None = None
+    estimated_workdays: list[Int32] | None = None
 
 
 class ExtraSpec(_Spec):
@@ -90,7 +91,7 @@ class ExtraSpec(_Spec):
     quantity: Decimal | None = None
     unit: str | None = None
     unit_price: Decimal | None = None
-    metadata: dict[str, Any] = {}
+    metadata: dict[str, str | int | bool | None] = {}  # JSON phẳng: không float, không lồng nhau
 
 
 class TotalDetailSpec(_Spec):

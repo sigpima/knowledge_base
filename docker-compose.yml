@@ -35,6 +35,7 @@ services:
         condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:${POSTGRES_PASSWORD:-demo-password}@db:5432/knowledge_base
+      API_HOST: 0.0.0.0  # trong container; cổng host vẫn chỉ mở trên 127.0.0.1 (xem ports)
     command: python main.py
     ports:
       - "127.0.0.1:8000:8000"

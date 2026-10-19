@@ -164,7 +164,7 @@ def compare_project_cost_breakdown(project_id: int, cost_type: str) -> Dict[str,
     field -- hoặc bất kỳ
     chuỗi nào khác, khớp không phân biệt hoa/thường và khoảng trắng với
     giá trị TotalDetail.type thực tế (vd "chi phí khác", "chi phí bảo
-    hành", "lợi nhuận thuần", "Incentive", "lợi nhuận cuối"); TotalDetail.type
+    hành", "lợi nhuận thuần"); TotalDetail.type
     là text tự do, không phải enum ràng buộc trong DB, nên cost_type
     không khớp với gì trong dữ liệu sẽ trả về price=0/pct_of_total=0.00
     cho mọi công trình thay vì báo lỗi -- bản thân điều đó cũng là thông
@@ -322,7 +322,7 @@ def compare_work_item_price(item_id: int) -> Dict[str, Any] | None:
 @mcp.tool()
 def compare_work_item_detail(item_id_a: int, item_id_b: int) -> Dict[str, Any] | None:
     """So sánh chi tiết dự toán của 2 hạng mục để giải thích TẠI SAO đơn
-    giá báo giá (unit_price) của chúng khác nhau (Q2/Q3: vật liệu, quy
+    giá báo giá (unit_price) của chúng khác nhau (vật liệu, quy
     trình, nhân công). Trả về None nếu 1 trong 2 item_id không tồn tại,
     hoặc bên nào đó không có dòng dự toán (không có gì để so sánh). Cấp
     cao nhất: unit_price_a/b (đơn giá báo giá quan sát được) và

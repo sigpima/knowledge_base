@@ -57,3 +57,16 @@ def test_data_format_doc_lists_every_top_level_key():
 
 def test_claude_md_exists():
     assert "knowledge_base" in (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+def test_readme_warns_that_compose_up_reloads_sample_data():
+    assert "nạp lại dữ liệu mẫu" in README
+
+
+def test_concept_metadata_matches_the_enforced_vocabulary():
+    from app.domains.quotation.application.services.ingest.concepts import CONCEPT_VOCABULARY
+
+    doc = (ROOT / "app" / "domains" / "quotation" / "metadata" / "concept.yaml").read_text(encoding="utf-8")
+
+    missing = [f"{kind}: {name}" for kind, names in CONCEPT_VOCABULARY.items() for name in names if name not in doc]
+    assert missing == []

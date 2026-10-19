@@ -1,10 +1,11 @@
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 from sqlalchemy import func, select
 
 from app.core.services.knowledge_service import KnowledgeService
-from app.domains.quotation.application.services.ingest.loader import load_quotation_file
+from app.domains.quotation.application.services.ingest.loader import load_quotation_file, load_quotation_text
 from app.domains.quotation.application.services.ingest.writer import (
     DuplicateProjectError,
     IngestResult,
@@ -106,3 +107,13 @@ def test_vietnamese_name_searchable_after_ingest(db_session):
     found = KnowledgeService(session_factory=SessionLocal).search_work_items(text="chống thấm")
 
     assert [item["name"] for item in found["items"]] == ["Chống thấm sân thượng"]
+
+
+def test_money_round_trips_exactly_through_the_database(db_session):
+    text = FIXTURE.read_text(encoding="utf-8").replace("unit_price: 95000", "unit_price: 1234567.89")
+    text = text.replace("quantity: 40", "quantity: 0.1")
+
+    ingest_quotation(db_session, load_quotation_text(text, "x.yaml"), "x.yaml")
+
+    item = db_session.execute(select(m.WorkItemModel).where(m.WorkItemModel.name == "Sơn dầu lan can sắt")).scalar_one()
+    assert (item.unit_price, item.quantity) == (Decimal("1234567.89"), Decimal("0.10"))

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/knowledge_base"
     database_url_readonly: str = ""
+    api_host: str = "127.0.0.1"
     mcp_server_host: str = "127.0.0.1"
     mcp_server_port: int = 8002
     ingest_max_body_bytes: int = 1_000_000

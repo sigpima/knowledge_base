@@ -63,7 +63,6 @@ def to_knowledge(file: QuotationFile, source_file: str) -> tuple[QuotationKnowle
                         CreateWorkStepData(
                             sequence=s_index,
                             name=step.name,
-                            description=step.description,
                             product_name=step.product_name,
                             layers=step.layers,
                             note=step.note,

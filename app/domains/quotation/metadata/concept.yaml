@@ -9,17 +9,16 @@ columns:
   type:
     description: |
       Loại concept -- khai báo trong file YAML báo giá cho từng hạng mục
-      (work_item), lấy từ danh sách giá trị cho phép. Các giá trị type và name tương ứng:
-        - stage: "Xử lý trước khi sơn" | "Sơn hoàn thiện"
-        - category: "Xử lý thấm, nứt - phẳng bề mặt" | "Phào chỉ" |
-          "Cạo sủi tường/sàn" | "Chống thấm" | "Sơn trang trí" |
-          "Sơn hiệu ứng" | "Sơn đá ARTSTONE" | "Sơn công nghiệp"
-        - application: "Nội thất" | "Ngoại thất"
-        - effect: "Gai" | "Bê tông"
-        - object: field mở (vd "Sàn", "Tường", "Trần", "Mái", "Sân thượng",
-          "Cột", "Cửa"), không phải enum cố định.
-      1 work_item có thể có nhiều concept cùng type (vd nhiều object), trừ
-      stage/category thường chỉ có tối đa 1 giá trị mỗi work_item.
+      (work_item), lấy từ danh sách giá trị cho phép (xem
+      app/domains/quotation/application/services/ingest/concepts.py).
+      Các giá trị type và name tương ứng:
+        - stage: "Thi công thô" | "Hoàn thiện" | "Bảo trì"
+        - category: "Nội thất" | "Ngoại thất"
+        - application: "Tường" | "Sàn" | "Trần" | "Kim loại"
+        - effect: "Chống thấm" | "Trang trí" | "Bảo vệ" | "Chống nóng"
+        - object: "Nhà ở" | "Văn phòng" | "Nhà xưởng" | "Công trình công cộng"
+      Một work_item có thể có nhiều concept, nhưng không lặp lại cùng một
+      cặp (type, name) và chỉ có tối đa một concept loại category.
     semantic_type: category
   name:
     description: Tên/giá trị của concept, xem danh sách theo từng type ở cột

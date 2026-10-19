@@ -105,4 +105,4 @@ def get_work_item(item_id: int):
 def run(port: int = 8000) -> None:
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host=settings.api_host, port=port)

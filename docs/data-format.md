@@ -56,7 +56,7 @@ Giới hạn theo cột DB: `scope_type` ≤ 20 ký tự, `term_type` và `trigg
 | `effect` | Chống thấm, Trang trí, Bảo vệ, Chống nóng |
 | `object` | Nhà ở, Văn phòng, Nhà xưởng, Công trình công cộng |
 
-Giá trị ngoài bảng này là lỗi. Danh sách nằm ở `app/domains/quotation/application/services/ingest/concepts.py`.
+Giá trị ngoài bảng này là lỗi; một hạng mục không được lặp cùng một concept và chỉ có tối đa một concept `category`. Danh sách nằm ở `app/domains/quotation/application/services/ingest/concepts.py`.
 
 ## Dự toán (`estimation`)
 
@@ -102,6 +102,10 @@ Loader từ chối mục dự toán nào lệch quá 0,5% so với `unit_price` 
 
 - `work_item.key` duy nhất trong file; tham chiếu `work_item` trong dự toán và vật tư phụ phải trỏ tới key có thật.
 - Số tiền và số lượng là **số thập phân chính xác** (`1234567.89` vào DB đúng như vậy, không qua số thực).
+- Giá trị phải vừa cột DB sẽ lưu nó: chuỗi không dài quá cột (ví dụ `unit` ≤ 20 ký tự, tên ≤ 255), số không quá số chữ số phần nguyên, và **không nhiều chữ số thập phân hơn cột** (`unit_price: 95000.123` bị từ chối thay vì bị làm tròn âm thầm). `percent_usage` và `construction_loss` là tỉ lệ (0.8 = 80%), không viết 80 hay 100.
+- Mỗi hạng mục báo giá chỉ có một dòng dự toán (`estimation.items[*].work_item` không được lặp).
+- Khoá lặp trong cùng một mapping YAML bị từ chối (tránh giá trị sau ghi đè âm thầm).
+- `extras[*].metadata` là JSON phẳng gồm chuỗi, số nguyên, true/false hoặc null (không dùng số thập phân hay mapping lồng).
 - Chuỗi Unicode được chuẩn hoá NFC; BOM đầu file được bỏ qua.
 - Không dùng alias YAML (`*x`), không lồng quá sâu, chỉ `safe_load`: file độc hại bị từ chối với lỗi 422, không làm sập server.
 - Tên công trình (`project.name`) không được trùng với công trình đã có; ingest trả 409 (HTTP) hoặc báo lỗi (CLI).

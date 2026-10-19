@@ -161,3 +161,95 @@ def test_deeply_nested_yaml_is_rejected_not_crashed():
     errors = _errors("a: " + "[" * 20000 + "]" * 20000 + "\n")
 
     assert errors
+
+
+# ---- giới hạn cột DB: lỗi 422 có vị trí thay vì 500 hoặc làm tròn âm thầm ----
+
+WORK_ITEM = "quotation.packages[0].work_items[0]"
+
+
+def test_unit_longer_than_column_rejected():
+    def mutate(d):
+        d["quotation"]["packages"][0]["work_items"][0]["unit"] = "m" * 21
+
+    assert any(e.startswith(f"{WORK_ITEM}.unit") for e in _errors(_mutated(mutate)))
+
+
+def test_name_longer_than_255_rejected():
+    def mutate(d):
+        d["project"]["name"] = "x" * 256
+
+    assert any(e.startswith("project.name") for e in _errors(_mutated(mutate)))
+
+
+def test_percent_usage_written_as_percentage_rejected():
+    def mutate(d):
+        d["estimation"]["items"][0]["main_materials"][0]["percent_usage"] = 100
+
+    assert any(e.startswith("estimation.items[0].main_materials[0].percent_usage") for e in _errors(_mutated(mutate)))
+
+
+def test_more_decimal_places_than_column_would_store_rejected():
+    text = FIXTURE.read_text(encoding="utf-8").replace("unit_price: 95000", "unit_price: 95000.123")
+
+    assert any(e.startswith("quotation.packages[1].work_items[0].unit_price") for e in _errors(text))
+
+
+def test_trailing_zero_decimals_are_still_fine():
+    text = FIXTURE.read_text(encoding="utf-8").replace("unit_price: 95000", "unit_price: 95000.100")
+
+    assert load_quotation_text(text, "t.yaml").quotation.packages[1].work_items[0].unit_price == Decimal("95000.1")
+
+
+def test_integer_overflowing_column_rejected():
+    def mutate(d):
+        d["quotation"]["packages"][0]["work_items"][0]["steps"][1]["layers"] = 99999999999
+
+    assert any("steps[1].layers" in e for e in _errors(_mutated(mutate)))
+
+
+def test_duplicate_concept_on_one_item_rejected():
+    def mutate(d):
+        concepts = d["quotation"]["packages"][0]["work_items"][0]["concepts"]
+        concepts.append(dict(concepts[0]))
+
+    assert any(e.startswith(f"{WORK_ITEM}.concepts[2]") and "trùng" in e for e in _errors(_mutated(mutate)))
+
+
+def test_two_estimation_items_for_one_work_item_rejected():
+    def mutate(d):
+        d["estimation"]["items"][1]["work_item"] = d["estimation"]["items"][0]["work_item"]
+
+    assert any(e.startswith("estimation.items[1].work_item") and "trùng" in e for e in _errors(_mutated(mutate)))
+
+
+def test_gigantic_integer_rejected_not_crashed():
+    assert _errors("a: " + "9" * 5000 + "\n")
+
+
+def test_decimal_with_gigantic_exponent_rejected_not_crashed():
+    text = FIXTURE.read_text(encoding="utf-8").replace("unit_price: 95000", "unit_price: 1.0e+999999999")
+
+    assert any("unit_price" in e for e in _errors(text))
+
+
+def test_extras_metadata_must_be_json_safe():
+    def mutate(d):
+        d["extras"][0]["metadata"] = {"rate": 0.5}
+
+    assert any(e.startswith("extras[0].metadata") for e in _errors(_mutated(mutate)))
+
+
+def test_extras_metadata_with_plain_values_is_accepted():
+    def mutate(d):
+        d["extras"][0]["metadata"] = {"ghi_chu": "theo yêu cầu", "so_luong": 3, "da_duyet": True}
+
+    assert load_quotation_text(_mutated(mutate), "t.yaml").extras[0].metadata["so_luong"] == 3
+
+
+def test_duplicate_mapping_key_rejected():
+    text = FIXTURE.read_text(encoding="utf-8").replace(
+        "          unit_price: 95000\n", "          unit_price: 95000\n          unit_price: 1\n"
+    )
+
+    assert any("unit_price" in e and "lặp" in e for e in _errors(text))
