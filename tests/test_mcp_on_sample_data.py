@@ -163,3 +163,15 @@ def test_run_readonly_sql_selects_and_rejects_writes(seeded):
     assert counted["rows"] == [{"n": len(seeded)}]
     assert "error" in rejected
     assert _scalar("SELECT count(*) FROM quotation.project") == len(seeded)
+
+
+def test_numbers_quoted_in_readme_examples_still_hold(seeded):
+    sen_vang, lua_non = _item_id("Biệt thự Sen Vàng", WATERPROOF), _item_id("Biệt thự Lúa Non", WATERPROOF)
+    price = main_mcp.compare_work_item_price(sen_vang)
+    detail = main_mcp.compare_work_item_detail(lua_non, sen_vang)
+    labor = main_mcp.compare_project_cost_breakdown(_project_id("Văn phòng Ngọc Lan"), "labor")
+
+    assert (sen_vang, lua_non) == (5, 1)
+    assert Decimal(price["historical_avg"]) == Decimal("222291.19") and float(price["pct_diff_from_avg"]) == 10.1
+    assert Decimal(detail["unit_price_b"]) == Decimal("244814.83") and Decimal(detail["price_diff"]) == Decimal("98357.28")
+    assert Decimal(labor["pct_of_total"]) == Decimal("54.50") and Decimal(labor["avg_pct_of_total"]) == Decimal("36.64")

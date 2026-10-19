@@ -20,7 +20,7 @@ echo
 
 echo "Đợi MCP (http://127.0.0.1:8002/mcp)..."
 for _ in $(seq 1 30); do
-  python3 scripts/smoke_mcp.py http://127.0.0.1:8002/mcp && exit 0
+  python3 -m scripts.smoke_mcp http://127.0.0.1:8002/mcp && exit 0
   sleep 2
 done
 echo "MCP không sẵn sàng" >&2
