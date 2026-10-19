@@ -28,11 +28,23 @@ PLACES = [
     "TP. Nha Trang, Khánh Hòa", "TP. Cần Thơ", "TP. Hải Phòng", "Bình Dương", "TP. Huế",
 ]
 
-PROCESS_POOL = [
-    "Vệ sinh bề mặt", "Xử lý khuyết tật bề mặt", "Bả matit lớp 1", "Bả matit lớp 2",
-    "Xả nhám hoàn thiện", "Sơn lót", "Sơn phủ lớp 1", "Sơn phủ lớp 2",
-    "Chống thấm lớp 1", "Chống thấm lớp 2",
-]
+# Quy trình thi công theo nhóm hạng mục, theo đúng thứ tự thực tế; hai bước cuối là bước bắt buộc.
+PROCESS_POOLS = {
+    "paint": ["Vệ sinh bề mặt", "Xử lý khuyết tật bề mặt", "Sơn lót", "Sơn phủ lớp 1", "Sơn phủ lớp 2"],
+    "putty": ["Vệ sinh bề mặt", "Xử lý khuyết tật bề mặt", "Bả matit lớp 1", "Bả matit lớp 2"],
+    "waterproof": ["Vệ sinh bề mặt", "Xử lý bề mặt", "Chống thấm lớp 1", "Chống thấm lớp 2"],
+    "metal": ["Vệ sinh bề mặt", "Chà nhám", "Sơn lót chống gỉ", "Sơn phủ"],
+}
+PROCESS_KIND = {
+    "Bả matit hoàn thiện": "putty",
+    "Chống thấm sân thượng": "waterproof",
+    "Chống thấm nhà vệ sinh": "waterproof",
+    "Chống thấm tường ngoài": "waterproof",
+    "Sơn dầu cửa sắt lan can": "metal",
+    "Sơn chống nóng mái tôn": "metal",
+}
+# Bước chuẩn bị bề mặt: không dùng sản phẩm, không có số lớp.
+PREP_STEPS = {"Vệ sinh bề mặt", "Xử lý khuyết tật bề mặt", "Xử lý bề mặt", "Chà nhám"}
 
 SUB_MATERIAL_CATALOG = [
     ("CCDC", "Rulo sơn", "cái"),

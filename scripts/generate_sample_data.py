@@ -24,7 +24,9 @@ from scripts.fake_catalog import (
     BUILDING_TYPES,
     PAYMENT_TRIGGERS,
     PLACES,
-    PROCESS_POOL,
+    PREP_STEPS,
+    PROCESS_KIND,
+    PROCESS_POOLS,
     PROJECT_NAMES,
     SCOPE_ENTRIES,
     STREETS,
@@ -161,6 +163,15 @@ def _slug(text: str) -> str:
     return "-".join("".join(c if c.isalnum() else " " for c in text).split())
 
 
+def _step(name: str, main_materials: list[dict], rng: random.Random) -> dict:
+    """Bước chuẩn bị bề mặt không có sản phẩm; bước còn lại dùng sản phẩm chính của hạng mục."""
+    if name in PREP_STEPS:
+        return dict(name=name)
+    row = rng.choice(main_materials)
+    layers = 1 if "lớp" in name else row["layers"]
+    return dict(name=name, product_name=row["product_name"], layers=layers)
+
+
 def _workers_for(profile: str, rng: random.Random) -> tuple[int, int, int]:
     if profile == "outsourced":
         return 0, rng.randint(2, 4), rng.randint(2, 4)
@@ -230,11 +241,9 @@ def _build_item(rng, entry: CatalogItem, index: int, ctx: _ProjectContext, pin: 
     if pin:
         step_names = list(pin.steps)
     else:
-        step_names = rng.sample(PROCESS_POOL, k=rng.randint(2, 4))
-    steps = [] if stepless else [
-        dict(name=name, product_name=rng.choice(entry.products)[2], layers=rng.choice([1, 2, 3]))
-        for name in step_names
-    ]
+        pool = PROCESS_POOLS[PROCESS_KIND.get(entry.name, "paint")]
+        step_names = [name for name in pool[:-2] if rng.random() < 0.7] + pool[-2:]
+    steps = [] if stepless else [_step(name, main_materials, rng) for name in step_names]
 
     kn_rate, out_main_rate, out_sub_rate = ctx.rates
     processes = []
