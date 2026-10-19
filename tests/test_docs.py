@@ -77,3 +77,12 @@ def test_data_format_doc_describes_duplicate_handling():
 
     for phrase in ("unchanged", "on_conflict=replace", "--replace", "content_hash", "409"):
         assert phrase in doc, phrase
+
+
+def test_readme_has_a_disclaimer_that_brands_and_data_are_invented():
+    assert "## Tuyên bố miễn trừ" in README
+    section = README.split("## Tuyên bố miễn trừ", 1)[1].split("\n## ", 1)[0]
+
+    for phrase in ("thương hiệu", "tự bịa", "ngẫu nhiên", "Vietcoat", "không liên quan"):
+        assert phrase in section, phrase
+    assert "(#tuyên-bố-miễn-trừ)" in README.split("## Tuyên bố miễn trừ", 1)[0]

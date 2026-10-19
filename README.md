@@ -6,6 +6,7 @@ công trình A cao hơn công trình B?"* kèm số liệu cụ thể.
 
 > Toàn bộ dữ liệu trong repo là **giả lập**: công ty "Sơn Việt Demo Co.", 24 công trình, 126 hạng mục. Mọi tên công
 > ty, công trình, thương hiệu, sản phẩm đều là bịa; nếu trùng với tên thật thì chỉ là ngẫu nhiên.
+> Xem [Tuyên bố miễn trừ](#tuyên-bố-miễn-trừ).
 
 ## Dự án này là gì
 
@@ -161,6 +162,17 @@ Chi tiết quy ước code: [CLAUDE.md](CLAUDE.md). Kiểm tra stack Docker từ
 - Quan hệ giá là phép nhân, `(vật tư + nhân công) × (1 + lợi nhuận) ≈ đơn giá`, nên các khoản chênh không cộng thẳng ra
   mức chênh giá cuối; tool và tài liệu đều nói rõ điều này.
 - Dữ liệu không có "hiện trạng công trình", nên không giải thích được chênh giá do yếu tố đó.
+
+## Tuyên bố miễn trừ
+
+Mọi thương hiệu và sản phẩm xuất hiện trong repo này, ví dụ **Vietcoat**, **Hoàng Sơn**, **Đại Phát**, **AnTâm** và các dòng sản
+phẩm như "AnTâm Seal PU" hay "Vietcoat Weather Plus", cùng công ty "Sơn Việt Demo Co.", tên công trình, địa chỉ, đơn giá và
+định mức, đều do tác giả **tự bịa** ra để minh hoạ. Chúng không liên quan, không đại diện, không được tài trợ hay xác nhận bởi bất
+kỳ doanh nghiệp, thương hiệu, sản phẩm hay công trình thật nào. Nếu có tên trùng hoặc giống tên thật thì chỉ là ngẫu nhiên, ngoài
+ý muốn của tác giả.
+
+Các con số chỉ mang tính minh hoạ cách dự án hoạt động: không phản ánh giá thị trường thật và không nên dùng để báo giá hay ra quyết
+định kinh doanh. Nếu bạn là chủ sở hữu một nhãn hiệu và thấy tên nào trùng với nhãn hiệu của mình, hãy mở một issue, tên đó sẽ được đổi.
 
 ## Giấy phép
 
