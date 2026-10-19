@@ -1,3 +1,4 @@
+import unicodedata
 from typing import Callable, List, Dict, Any
 
 from sqlalchemy.orm import Session
@@ -30,6 +31,13 @@ class KnowledgeService:
         concept_filters: Dict[str, str] | None = None,
         limit: int = 50,
     ) -> Dict[str, Any]:
+        # Dữ liệu lưu ở dạng NFC; câu truy vấn gõ trên bàn phím/hệ điều hành khác có thể là NFD.
+        text = unicodedata.normalize("NFC", text) if text is not None else None
+        if concept_filters:
+            concept_filters = {
+                unicodedata.normalize("NFC", key): unicodedata.normalize("NFC", value)
+                for key, value in concept_filters.items()
+            }
         with self.session_factory() as session:
             facade = QuotationFacade.from_session(session)
             items = facade.search_work_items(text=text, concept_filters=concept_filters, limit=limit)

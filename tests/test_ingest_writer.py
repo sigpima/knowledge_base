@@ -117,3 +117,19 @@ def test_money_round_trips_exactly_through_the_database(db_session):
 
     item = db_session.execute(select(m.WorkItemModel).where(m.WorkItemModel.name == "Sơn dầu lan can sắt")).scalar_one()
     assert (item.unit_price, item.quantity) == (Decimal("1234567.89"), Decimal("0.10"))
+
+
+def test_nfd_search_text_still_finds_nfc_stored_names(db_session):
+    import unicodedata
+
+    ingest_quotation(db_session, load_quotation_file(FIXTURE), "x.yaml")
+    typed_on_another_keyboard = unicodedata.normalize("NFD", "chống thấm")
+    assert typed_on_another_keyboard != "chống thấm"
+
+    found = KnowledgeService(session_factory=SessionLocal).search_work_items(text=typed_on_another_keyboard)
+    by_concept = KnowledgeService(session_factory=SessionLocal).search_work_items(
+        concept_filters={unicodedata.normalize("NFD", "effect"): unicodedata.normalize("NFD", "Chống thấm")}
+    )
+
+    assert [item["name"] for item in found["items"]] == ["Chống thấm sân thượng"]
+    assert [item["name"] for item in by_concept["items"]] == ["Chống thấm sân thượng"]

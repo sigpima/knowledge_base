@@ -121,4 +121,4 @@ curl -X POST --data-binary @file.yaml -H 'Content-Type: application/x-yaml' \
      'http://127.0.0.1:8000/ingest?source_file=file.yaml'
 ```
 
-Lỗi kiểm tra trả về `422` với `{"errors": ["quotation.packages[0].work_items[1].key: ...", ...]}`.
+Body phải có `Content-Type` là `application/x-yaml`, `application/yaml` hoặc `text/yaml` (nếu không: `415`). Lỗi kiểm tra trả về `422` với `{"errors": ["quotation.packages[0].work_items[1].key: ...", ...]}`.

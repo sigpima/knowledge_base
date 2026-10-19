@@ -84,3 +84,20 @@ def test_post_ingest_non_utf8_body_returns_422(db_session):
         response = client.post("/ingest", content=b"\xff\xfe\x00bad", headers=YAML_HEADERS)
 
     assert response.status_code == 422
+
+
+def test_post_ingest_rejects_non_yaml_content_type_with_415(db_session):
+    with TestClient(app) as client:
+        for headers in ({"Content-Type": "text/plain"}, {"Content-Type": "application/json"}, {}):
+            response = client.post("/ingest", content=FIXTURE_TEXT.encode("utf-8"), headers=headers)
+            assert response.status_code == 415, headers
+
+    assert _count(db_session, ProjectModel) == 0
+
+
+def test_post_ingest_accepts_the_yaml_content_types(db_session):
+    for index, content_type in enumerate(("application/x-yaml", "application/yaml", "text/yaml; charset=utf-8")):
+        text = FIXTURE_TEXT.replace("Biệt thự Hoa Sữa", f"Biệt thự Hoa Sữa {index}")
+        with TestClient(app) as client:
+            response = client.post("/ingest", content=text.encode("utf-8"), headers={"Content-Type": content_type})
+        assert response.status_code == 201, content_type

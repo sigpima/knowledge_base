@@ -21,6 +21,8 @@ logger = get_logger(__name__)
 
 knowledge_service: Optional[KnowledgeService] = None
 
+YAML_MEDIA_TYPES = {"application/x-yaml", "application/yaml", "text/yaml", "text/x-yaml"}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -62,7 +64,16 @@ async def _read_limited_body(request: Request) -> bytes:
 
 @app.post("/ingest", status_code=201)
 async def ingest(request: Request, source_file: str = "http-upload.yaml"):
-    """Nhận một file báo giá YAML trong body, kiểm tra rồi ghi vào DB."""
+    """Nhận một file báo giá YAML trong body, kiểm tra rồi ghi vào DB.
+
+    Bắt buộc Content-Type YAML: loại `text/plain` và form là thứ duy nhất một trang web bất kỳ
+    có thể gửi tới 127.0.0.1 mà trình duyệt không hỏi trước (preflight), nên từ chối chúng.
+    """
+    media_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+    if media_type not in YAML_MEDIA_TYPES:
+        raise HTTPException(
+            status_code=415, detail="Content-Type phải là application/x-yaml, application/yaml hoặc text/yaml"
+        )
     body = await _read_limited_body(request)
     try:
         text = body.decode("utf-8")
