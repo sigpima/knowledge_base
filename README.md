@@ -89,6 +89,26 @@ url = "http://127.0.0.1:8002/mcp"
 
 Rồi hỏi bằng tiếng Việt, ví dụ: *"Vì sao đơn giá chống thấm sân thượng ở Biệt thự Sen Vàng cao hơn Biệt thự Lúa Non?"*
 
+## Chat ngay trong terminal (Gemini)
+
+Không có sẵn Claude/Codex? Dự án có một bot hỏi đáp chạy trong terminal, dùng Gemini làm mô hình và tự gọi 10 tool MCP ở trên.
+Phần này **tuỳ chọn**: chỉ bot cần khoá API, mọi thứ còn lại chạy không cần khoá.
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements-chat.txt
+export GEMINI_API_KEY=...        # khoá lấy tại https://aistudio.google.com/apikey (hoặc ghi vào file .env)
+docker compose up                # terminal khác: bot nối vào MCP server ở cổng 8002
+.venv/bin/python -m app.chat
+```
+
+Gõ câu hỏi tiếng Việt rồi Enter. Mỗi lần mô hình gọi một tool, bot in một dòng `↳ tên_tool {tham số}` trước câu trả lời, để
+bạn thấy số liệu đến từ đâu (thêm `--quiet` để ẩn). Lệnh trong phiên: `/tools`, `/clear` (xoá ngữ cảnh), `/help`, `/exit`.
+
+- **Trí nhớ:** trong một phiên, bot nhớ các lượt trước nên hỏi tiếp được ("còn công trình kia thì sao?"); `/clear` hoặc mở phiên mới thì quên.
+- **Lịch sử:** mỗi phiên được ghi vào một file JSON trong `chat_logs/` (câu hỏi, câu trả lời, các lần gọi tool, thời điểm), chỉ để bạn xem lại;
+  bot không đọc lại chúng. Tắt bằng `--no-log`, đổi thư mục bằng `--log-dir` hoặc `CHAT_LOG_DIR`.
+- Đổi mô hình bằng `--model` hoặc `GEMINI_CHAT_MODEL`; trỏ tới MCP server khác bằng `--url` hoặc `MCP_SERVER_URL`.
+
 ## Ví dụ hỏi đáp thật
 
 Bốn ví dụ sau do một agent Claude trả lời bằng cách gọi các tool trên chính bộ dữ liệu `data/sample/`. Số liệu lấy
@@ -154,9 +174,10 @@ Chi tiết quy ước code: [CLAUDE.md](CLAUDE.md). Kiểm tra stack Docker từ
 
 ## Giới hạn và hướng phát triển
 
-- **Chưa có giao diện chat.** Bản này chỉ có MCP server; muốn hỏi đáp thì nối vào Claude/Codex như trên. Dự kiến thêm
-  bot terminal hoặc giao diện web đơn giản.
-- **Chưa có bộ nhớ hội thoại.** Mỗi câu hỏi độc lập; lịch sử trong phiên do chính agent bạn dùng giữ.
+- **Chỉ có bot terminal, chưa có giao diện web.** Bot cần khoá Gemini; bốn ví dụ trong `docs/examples/` được một agent Claude trả lời qua
+  chính các tool MCP này (chưa phải qua bot terminal).
+- **Trí nhớ chỉ trong phiên.** Bot nhớ các lượt trước trong cùng một lần chạy (hết ngữ cảnh dài thì dùng `/clear`); lịch sử JSON chỉ để
+  xem lại, không được nạp lại vào lần chạy sau.
 - **Mỗi tên công trình chỉ có một bản.** Gửi lại file y hệt thì bỏ qua (200 `unchanged`), cùng tên nhưng nội dung khác thì 409, muốn thay thế phải yêu cầu rõ (`?on_conflict=replace` / `--replace`); xem [docs/data-format.md](docs/data-format.md). Không giữ lịch sử phiên bản. `scripts/seed.py` thì xoá sạch rồi nạp lại.
 - **`run_readonly_sql`** chỉ nhận một câu `SELECT`/`WITH`, trả tối đa 200 dòng (trường `truncated` báo có bị cắt không).
 - Quan hệ giá là phép nhân, `(vật tư + nhân công) × (1 + lợi nhuận) ≈ đơn giá`, nên các khoản chênh không cộng thẳng ra

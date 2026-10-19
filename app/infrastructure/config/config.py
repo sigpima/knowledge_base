@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     mcp_server_host: str = "127.0.0.1"
     mcp_server_port: int = 8002
     ingest_max_body_bytes: int = 1_000_000
+    mcp_server_url: str = "http://127.0.0.1:8002/mcp"
+    gemini_api_key: str = ""
+    gemini_chat_model: str = "gemini-3.5-flash-lite"
+    gemini_base_url: str = ""  # để trống = máy chủ Gemini mặc định
+    chat_log_dir: str = "chat_logs"
     log_level: str = "INFO"
 
 

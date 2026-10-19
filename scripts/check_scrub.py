@@ -17,7 +17,6 @@ DEFAULT_PATTERNS: list[re.Pattern] = [
     for p in (
         r"\blark\b",
         r"sharepoint",
-        r"\bgemini\b",
         r"dulux",
         r"jotun",
         r"nippon",

@@ -16,7 +16,8 @@ python3 -m scripts.smoke_mcp              # kiểm tra MCP đang chạy (10 tool
 python3 -m scripts.mcp_call list          # xem tool; gọi thử: python3 -m scripts.mcp_call TEN_TOOL '{"...": ...}'
 python -m scripts.generate_sample_data --out data/sample   # sinh lại dữ liệu mẫu (tất định)
 python -m scripts.init_db && python -m scripts.seed data/sample   # cần DATABASE_URL, RO_PASSWORD
-python -m app.cli ingest PATH             # nhập file/thư mục YAML
+python -m app.cli ingest PATH             # nhập file/thư mục YAML (--replace để thay công trình cùng tên)
+python -m app.chat                        # bot hỏi đáp trong terminal (cần GEMINI_API_KEY và MCP server đang chạy)
 ```
 
 Test (Postgres thật, bắt buộc đặt biến môi trường, không có giá trị mặc định):
@@ -38,6 +39,7 @@ trên DB nào đó, hoặc `CREATE ROLE knowledge_base_ro LOGIN PASSWORD '...'`)
   - `application/services/*_service.py` – các bộ so sánh (đơn giá, chi tiết dự toán, nhân công, cơ cấu chi phí).
 - `app/core/services/knowledge_service.py` – lớp truy vấn đọc, MCP dùng với session chỉ đọc.
 - `app/interfaces/http/api.py` – service ingest (FastAPI): `/health`, `/ingest`, `/work-items/{id}`.
+- `app/chat/` – bot terminal tuỳ chọn: `service.py` (Gemini tự gọi tool MCP, nhớ trong phiên), `history.py` (log JSON mỗi phiên, chỉ ghi), `cli.py` (vòng lặp REPL). `requirements-chat.txt` chứa `google-genai`; test e2e dùng SDK thật + server Gemini giả cục bộ nên không cần khoá.
 - `main_mcp.py` – MCP server (streamable-http, cổng 8002), đúng 10 tool, kết nối bằng role Postgres **chỉ đọc**.
 - `scripts/` – sinh dữ liệu mẫu, seed, init DB, smoke test, client MCP tối giản.
 - `data/sample/` – 24 file YAML giả (được commit; phải khớp đầu ra của bộ sinh – có test).

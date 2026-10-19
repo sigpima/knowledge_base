@@ -86,3 +86,8 @@ def test_readme_has_a_disclaimer_that_brands_and_data_are_invented():
     for phrase in ("thương hiệu", "tự bịa", "ngẫu nhiên", "Vietcoat", "không liên quan"):
         assert phrase in section, phrase
     assert "(#tuyên-bố-miễn-trừ)" in README.split("## Tuyên bố miễn trừ", 1)[0]
+
+
+def test_readme_documents_the_terminal_chat():
+    for phrase in ("python -m app.chat", "GEMINI_API_KEY", "requirements-chat.txt", "chat_logs", "/clear"):
+        assert phrase in README, phrase

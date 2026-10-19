@@ -1,0 +1,3 @@
+# Chỉ cần cho bot chat trong terminal (python -m app.chat); kéo theo các gói chạy chung của dự án.
+-r requirements.txt
+google-genai==2.20.0
