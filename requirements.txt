@@ -1,11 +1,9 @@
-# Direct dependencies only; pip resolves transitive deps automatically.
+# Direct runtime dependencies only; pip resolves transitive deps automatically.
 fastapi==0.141.1
-httpx==0.28.1
 mcp==2.0.0
 psycopg2-binary==2.9.13
 pydantic==2.13.4
 pydantic-settings==2.15.0
-pytest==9.1.1
 PyYAML==6.0.3
 SQLAlchemy==2.0.51
 uvicorn==0.52.1

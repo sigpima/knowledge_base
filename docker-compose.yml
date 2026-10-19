@@ -1,0 +1,52 @@
+# Demo một lệnh: `docker compose up` dựng Postgres, nạp dữ liệu mẫu rồi bật API ingest + MCP server.
+# Mật khẩu dưới đây chỉ dành cho demo trên máy cá nhân; đổi bằng biến môi trường hoặc file .env.
+
+x-app: &app
+  image: knowledge-base:demo
+  build: .
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-demo-password}
+      POSTGRES_DB: knowledge_base
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d knowledge_base"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  seed:
+    <<: *app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:${POSTGRES_PASSWORD:-demo-password}@db:5432/knowledge_base
+      RO_PASSWORD: ${RO_PASSWORD:-demo-readonly}
+    command: sh -c "python -m scripts.init_db && python -m scripts.seed data/sample"
+    restart: "no"
+
+  api:
+    <<: *app
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:${POSTGRES_PASSWORD:-demo-password}@db:5432/knowledge_base
+    command: python main.py
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  mcp:
+    <<: *app
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL_READONLY: postgresql+psycopg2://knowledge_base_ro:${RO_PASSWORD:-demo-readonly}@db:5432/knowledge_base
+      MCP_SERVER_HOST: 0.0.0.0
+    command: python main_mcp.py
+    ports:
+      - "127.0.0.1:8002:8002"
