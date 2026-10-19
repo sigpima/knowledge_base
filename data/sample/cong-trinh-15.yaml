@@ -1,0 +1,557 @@
+# Dữ liệu giả lập do scripts/generate_sample_data.py sinh ra.
+# Mọi tên công ty, công trình, sản phẩm đều là bịa; số liệu không lấy từ nguồn thật nào.
+project:
+  name: Chung cư Khánh Vân
+  address: 115 Nguyễn Văn Linh, Bình Dương
+  estimated_workdays:
+  - 19
+  - 17
+quotation:
+  code: BG-2025-015
+  issue_date: 2025-09-17
+  currency: VND
+  total_amount: 346288986.6
+  packages:
+  - name: Gói thi công 1
+    work_items:
+    - key: hm01-son-nuoc-noi-that
+      name: Sơn nước nội thất
+      description: Sơn nước nội thất, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 202.95
+      unit_price: 61361.19
+      concepts:
+      - type: category
+        name: Nội thất
+      - type: application
+        name: Tường
+      - type: effect
+        name: Trang trí
+      steps:
+      - name: Xử lý khuyết tật bề mặt
+        product_name: Hoàng Sơn Home Plus nội thất
+        layers: 3
+      - name: Sơn lót
+        product_name: Hoàng Sơn Home Plus nội thất
+        layers: 3
+    - key: hm02-son-dau-cua-sat-lan-can
+      name: Sơn dầu cửa sắt lan can
+      description: Sơn dầu cửa sắt lan can, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 90.65
+      unit_price: 115161.54
+      concepts:
+      - type: application
+        name: Kim loại
+      - type: effect
+        name: Bảo vệ
+      steps:
+      - name: Chống thấm lớp 1
+        product_name: Sơn dầu Đại Phát Alkyd Pro
+        layers: 2
+      - name: Xả nhám hoàn thiện
+        product_name: Sơn dầu Đại Phát Alkyd
+        layers: 1
+      - name: Chống thấm lớp 2
+        product_name: Sơn dầu Đại Phát Alkyd
+        layers: 2
+      - name: Vệ sinh bề mặt
+        product_name: Sơn dầu Đại Phát Alkyd
+        layers: 3
+    - key: hm03-son-epoxy-san-tang-ham
+      name: Sơn epoxy sàn tầng hầm
+      description: Sơn epoxy sàn tầng hầm, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 1458.9
+      unit_price: 139055.35
+      concepts:
+      - type: application
+        name: Sàn
+      - type: effect
+        name: Bảo vệ
+      - type: object
+        name: Nhà xưởng
+      steps:
+      - name: Vệ sinh bề mặt
+        product_name: Hoàng Sơn Epoxy Pro chịu tải
+        layers: 1
+      - name: Xả nhám hoàn thiện
+        product_name: Hoàng Sơn Epoxy sàn 2 thành phần
+        layers: 1
+      - name: Bả matit lớp 2
+        product_name: Hoàng Sơn Epoxy sàn 2 thành phần
+        layers: 3
+      - name: Sơn phủ lớp 2
+        product_name: Hoàng Sơn Epoxy Pro chịu tải
+        layers: 3
+    - key: hm04-chong-tham-tuong-ngoai
+      name: Chống thấm tường ngoài
+      description: Chống thấm tường ngoài, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 843.75
+      unit_price: 142848.58
+      concepts:
+      - type: effect
+        name: Chống thấm
+      - type: application
+        name: Tường
+      - type: category
+        name: Ngoại thất
+      steps:
+      - name: Sơn phủ lớp 2
+        product_name: AnTâm Wall chống thấm màu
+        layers: 3
+      - name: Vệ sinh bề mặt
+        product_name: AnTâm Wall Pro đàn hồi
+        layers: 3
+      - name: Chống thấm lớp 2
+        product_name: AnTâm Wall Pro đàn hồi
+        layers: 3
+  scope_terms:
+  - scope_type: bao gồm
+    term_type: INCLUDE
+    description: Vật tư sơn chính hãng theo bảng báo giá
+  - scope_type: loại trừ
+    term_type: EXCLUDE
+    description: Chi phí xin phép thi công (nếu có)
+  - scope_type: loại trừ
+    term_type: EXCLUDE
+    description: Chi phí sửa chữa, cải tạo phát sinh kết cấu
+  - scope_type: bao gồm
+    term_type: INCLUDE
+    description: Nhân công thi công đúng quy trình kỹ thuật
+  payment_terms:
+  - percentage: 39.53
+    trigger_type: DEPOSIT
+    trigger_description: Đặt cọc ký hợp đồng
+  - percentage: 37.21
+    trigger_type: MIDTERM
+    trigger_description: Nghiệm thu giai đoạn 1
+  - percentage: 23.26
+    trigger_type: MIDTERM2
+    trigger_description: Nghiệm thu giai đoạn 2
+estimation:
+  total_price: 334144859.41
+  total_details:
+  - type: vật tư chính
+    name: Vật tư chính
+    price: 161039000
+  - type: vật tư phụ
+    name: Vật tư phụ / CCDC
+    price: 2725064.03
+  - type: nhân công
+    name: Nhân công
+    price: 96251770
+  - type: chi phí khác
+    name: Giàn giáo & xử lý bề mặt
+    price: 7139009.81
+  - type: lợi nhuận thuần
+    name: Lợi nhuận thuần
+    price: 66990015.57
+  items:
+  - name: Sơn nước nội thất
+    work_item: hm01-son-nuoc-noi-that
+    main_unit_price: 23935.9
+    sub_unit_price: 2208.92
+    material_unit_price: 26420.63
+    total_price_area_based: 4857790
+    total_price_round: 8590000
+    material_unit_price_with_color_mixing_cost: 27061.18
+    labor_unit_price: 24944.84
+    profit_margin: 0.1946
+    labor:
+      area: 202.95
+      kn_manday: 3.71
+      main_out_manday: 4.38
+      sub_out_manday: 3.62
+      kn_total_price: 1383830
+      main_out_total_price: 1979760
+      sub_out_total_price: 1346640
+      kn_out_total_price: 1676920
+      final_unit_price_type: has_kn
+      labor_coeff: 1.0748
+      labor_unit_price: 24944.84
+      processes:
+      - name: Xử lý khuyết tật bề mặt
+        main_labors_kn: 1
+        main_labors_out: 2
+        sub_labors_out: 2
+        days: 1.43
+        kn_manday: 1.43
+        main_out_manday: 2.86
+        sub_out_manday: 2.86
+      - name: Sơn lót
+        main_labors_kn: 3
+        main_labors_out: 2
+        sub_labors_out: 1
+        days: 0.76
+        kn_manday: 2.28
+        main_out_manday: 1.52
+        sub_out_manday: 0.76
+    main_materials:
+    - product_segment: TRUNG CẤP
+      product_line: Hoàng Sơn Home
+      product_name: Hoàng Sơn Home nội thất
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 12.53
+      construction_loss: 0.1031
+      actual_rate_per_litter: 11.24
+      actual_rate_per_box: 202.32
+      box_price: 1407000
+      color_mixing_price: 40000
+      unit_price_per_m2: 6954.33
+      percent_usage: 0.5046
+      area: 202.95
+      total_price_area_based: 1421070
+      litters: 18.22
+      boxes: 1.01
+      total_price_round: 2814000
+    - product_segment: CAO CẤP
+      product_line: Hoàng Sơn Home Plus
+      product_name: Hoàng Sơn Home Plus nội thất
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 10.26
+      construction_loss: 0.0829
+      actual_rate_per_litter: 9.41
+      actual_rate_per_box: 169.38
+      box_price: 2888000
+      color_mixing_price: 25000
+      unit_price_per_m2: 17050.42
+      percent_usage: 0.4954
+      area: 202.95
+      total_price_area_based: 3436720
+      litters: 21.37
+      boxes: 1.19
+      total_price_round: 5776000
+  - name: Sơn dầu cửa sắt lan can
+    work_item: hm02-son-dau-cua-sat-lan-can
+    main_unit_price: 18431.88
+    sub_unit_price: 1740.58
+    material_unit_price: 19938.43
+    total_price_area_based: 1670850
+    total_price_round: 1692000
+    material_unit_price_with_color_mixing_cost: 21041.57
+    labor_unit_price: 71641.32
+    profit_margin: 0.2575
+    labor:
+      area: 90.65
+      kn_manday: 3.11
+      main_out_manday: 3.32
+      sub_out_manday: 8.43
+      kn_total_price: 1160030
+      main_out_total_price: 1500640
+      sub_out_total_price: 3135960
+      kn_out_total_price: 1405720
+      final_unit_price_type: all_out
+      labor_coeff: 1.0748
+      labor_unit_price: 71641.32
+      processes:
+      - name: Chống thấm lớp 1
+        main_labors_kn: 1
+        main_labors_out: 2
+        sub_labors_out: 3
+        days: 0.71
+        kn_manday: 0.71
+        main_out_manday: 1.42
+        sub_out_manday: 2.13
+      - name: Xả nhám hoàn thiện
+        main_labors_kn: 0
+        main_labors_out: 0
+        sub_labors_out: 2
+        days: 1.25
+        kn_manday: 0
+        main_out_manday: 0
+        sub_out_manday: 2.5
+      - name: Chống thấm lớp 2
+        main_labors_kn: 3
+        main_labors_out: 2
+        sub_labors_out: 4
+        days: 0.5
+        kn_manday: 1.5
+        main_out_manday: 1
+        sub_out_manday: 2
+      - name: Vệ sinh bề mặt
+        main_labors_kn: 1
+        main_labors_out: 1
+        sub_labors_out: 2
+        days: 0.9
+        kn_manday: 0.9
+        main_out_manday: 0.9
+        sub_out_manday: 1.8
+    main_materials:
+    - product_segment: TRUNG CẤP
+      product_line: Đại Phát Alkyd
+      product_name: Sơn dầu Đại Phát Alkyd
+      layers: 2
+      package_type: 5L/thùng
+      theoretical_rate: 9.56
+      construction_loss: 0.0399
+      actual_rate_per_litter: 9.18
+      actual_rate_per_box: 45.9
+      box_price: 423000
+      color_mixing_price: 25000
+      unit_price_per_m2: 9215.69
+      percent_usage: 1
+      area: 90.65
+      total_price_area_based: 1670850
+      litters: 19.75
+      boxes: 3.95
+      total_price_round: 1692000
+  - name: Sơn epoxy sàn tầng hầm
+    work_item: hm03-son-epoxy-san-tang-ham
+    main_unit_price: 56714.62
+    sub_unit_price: 5857.36
+    material_unit_price: 65318.85
+    total_price_area_based: 82740960
+    total_price_round: 83056000
+    material_unit_price_with_color_mixing_cost: 66113.97
+    labor_unit_price: 45394.01
+    profit_margin: 0.256
+    labor:
+      area: 1458.9
+      kn_manday: 25.33
+      main_out_manday: 32.91
+      sub_out_manday: 100.25
+      kn_total_price: 9448090
+      main_out_total_price: 14875320
+      sub_out_total_price: 37293000
+      kn_out_total_price: 11449160
+      final_unit_price_type: has_kn
+      labor_coeff: 1.0748
+      labor_unit_price: 45394.01
+      processes:
+      - name: Vệ sinh bề mặt
+        main_labors_kn: 3
+        main_labors_out: 1
+        sub_labors_out: 1
+        days: 5.71
+        kn_manday: 17.13
+        main_out_manday: 5.71
+        sub_out_manday: 5.71
+      - name: Xả nhám hoàn thiện
+        main_labors_kn: 1
+        main_labors_out: 2
+        sub_labors_out: 3
+        days: 8.2
+        kn_manday: 8.2
+        main_out_manday: 16.4
+        sub_out_manday: 24.6
+      - name: Bả matit lớp 2
+        main_labors_kn: 0
+        main_labors_out: 0
+        sub_labors_out: 2
+        days: 24.17
+        kn_manday: 0
+        main_out_manday: 0
+        sub_out_manday: 48.34
+      - name: Sơn phủ lớp 2
+        main_labors_kn: 0
+        main_labors_out: 2
+        sub_labors_out: 4
+        days: 5.4
+        kn_manday: 0
+        main_out_manday: 10.8
+        sub_out_manday: 21.6
+    main_materials:
+    - product_segment: TRUNG CẤP
+      product_line: Hoàng Sơn Epoxy
+      product_name: Hoàng Sơn Epoxy sàn 2 thành phần
+      layers: 2
+      package_type: 20L/thùng
+      theoretical_rate: 5.44
+      construction_loss: 0.0713
+      actual_rate_per_litter: 5.05
+      actual_rate_per_box: 101
+      box_price: 2864000
+      color_mixing_price: 40000
+      unit_price_per_m2: 28356.44
+      percent_usage: 1
+      area: 1458.9
+      total_price_area_based: 82740960
+      litters: 577.78
+      boxes: 28.89
+      total_price_round: 83056000
+  - name: Chống thấm tường ngoài
+    work_item: hm04-chong-tham-tuong-ngoai
+    main_unit_price: 78731.71
+    sub_unit_price: 6666.57
+    material_unit_price: 86974.12
+    total_price_area_based: 66429880
+    total_price_round: 67701000
+    material_unit_price_with_color_mixing_cost: 88556.34
+    labor_unit_price: 30422.81
+    profit_margin: 0.2168
+    labor:
+      area: 843.75
+      kn_manday: 19.01
+      main_out_manday: 0
+      sub_out_manday: 45.14
+      kn_total_price: 7090730
+      main_out_total_price: 0
+      sub_out_total_price: 16792080
+      kn_out_total_price: 8592520
+      final_unit_price_type: has_kn
+      labor_coeff: 1.0748
+      labor_unit_price: 30422.81
+      processes:
+      - name: Sơn phủ lớp 2
+        main_labors_kn: 1
+        main_labors_out: 0
+        sub_labors_out: 2
+        days: 6.23
+        kn_manday: 6.23
+        main_out_manday: 0
+        sub_out_manday: 12.46
+      - name: Vệ sinh bề mặt
+        main_labors_kn: 0
+        main_labors_out: 0
+        sub_labors_out: 2
+        days: 14.21
+        kn_manday: 0
+        main_out_manday: 0
+        sub_out_manday: 28.42
+      - name: Chống thấm lớp 2
+        main_labors_kn: 3
+        main_labors_out: 0
+        sub_labors_out: 1
+        days: 4.26
+        kn_manday: 12.78
+        main_out_manday: 0
+        sub_out_manday: 4.26
+    main_materials:
+    - product_segment: CAO CẤP
+      product_line: AnTâm Wall Pro
+      product_name: AnTâm Wall Pro đàn hồi
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 1.57
+      construction_loss: 0.0758
+      actual_rate_per_litter: 1.45
+      actual_rate_per_box: 26.1
+      box_price: 1742000
+      color_mixing_price: 25000
+      unit_price_per_m2: 66743.3
+      percent_usage: 0.3765
+      area: 843.75
+      total_price_area_based: 42400280
+      litters: 438.17
+      boxes: 24.34
+      total_price_round: 43550000
+    - product_segment: TRUNG CẤP
+      product_line: AnTâm Wall
+      product_name: AnTâm Wall chống thấm màu
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 1.96
+      construction_loss: 0.0688
+      actual_rate_per_litter: 1.83
+      actual_rate_per_box: 32.94
+      box_price: 791000
+      color_mixing_price: 25000
+      unit_price_per_m2: 24013.36
+      percent_usage: 0.4467
+      area: 843.75
+      total_price_area_based: 18098080
+      litters: 411.92
+      boxes: 22.88
+      total_price_round: 18193000
+    - product_segment: TRUNG CẤP
+      product_line: AnTâm Wall
+      product_name: AnTâm Wall chống thấm màu
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 1.99
+      construction_loss: 0.0684
+      actual_rate_per_litter: 1.85
+      actual_rate_per_box: 33.3
+      box_price: 662000
+      color_mixing_price: 15000
+      unit_price_per_m2: 19879.88
+      percent_usage: 0.1768
+      area: 843.75
+      total_price_area_based: 5931520
+      litters: 161.27
+      boxes: 8.96
+      total_price_round: 5958000
+  sub_materials:
+  - type: chi phí vận hành
+    name: Giàn giáo thi công
+    unit: bộ
+    unit_price: 117602
+    total_price: 851438.48
+    usages:
+    - work_item: hm04-chong-tham-tuong-ngoai
+      amount: 7.24
+      total_price: 851438.48
+  - type: chi phí vận chuyển
+    name: Vận chuyển vật tư
+    unit: chuyến
+    unit_price: 34070
+    total_price: 910009.7
+    usages:
+    - work_item: hm02-son-dau-cua-sat-lan-can
+      amount: 10.08
+      total_price: 343425.6
+    - work_item: hm04-chong-tham-tuong-ngoai
+      amount: 16.63
+      total_price: 566584.1
+  - type: CCDC
+    name: Rulo sơn
+    unit: cái
+    unit_price: 25855
+    total_price: 963615.85
+    usages:
+    - work_item: hm02-son-dau-cua-sat-lan-can
+      amount: 13.17
+      total_price: 340510.35
+    - work_item: hm03-son-epoxy-san-tang-ham
+      amount: 7.1
+      total_price: 183570.5
+    - work_item: hm04-chong-tham-tuong-ngoai
+      amount: 17
+      total_price: 439535
+  products_to_buy:
+  - product_name: Hoàng Sơn Home nội thất
+    package_type: 18L/thùng
+    boxes: 1.01
+    boxes_round: 2
+    boxes_price: 2814000
+    boxes_unit_price: 1407000
+    total_price_round: 2814000
+  - product_name: Hoàng Sơn Home Plus nội thất
+    package_type: 18L/thùng
+    boxes: 1.19
+    boxes_round: 2
+    boxes_price: 5776000
+    boxes_unit_price: 2888000
+    total_price_round: 5776000
+  - product_name: Sơn dầu Đại Phát Alkyd
+    package_type: 5L/thùng
+    boxes: 3.95
+    boxes_round: 4
+    boxes_price: 1692000
+    boxes_unit_price: 423000
+    total_price_round: 1692000
+  - product_name: Hoàng Sơn Epoxy sàn 2 thành phần
+    package_type: 20L/thùng
+    boxes: 28.89
+    boxes_round: 29
+    boxes_price: 83056000
+    boxes_unit_price: 2864000
+    total_price_round: 83056000
+  - product_name: AnTâm Wall Pro đàn hồi
+    package_type: 18L/thùng
+    boxes: 24.34
+    boxes_round: 25
+    boxes_price: 43550000
+    boxes_unit_price: 1742000
+    total_price_round: 43550000
+  - product_name: AnTâm Wall chống thấm màu
+    package_type: 18L/thùng
+    boxes: 31.84
+    boxes_round: 32
+    boxes_price: 25312000
+    boxes_unit_price: 791000
+    total_price_round: 25312000

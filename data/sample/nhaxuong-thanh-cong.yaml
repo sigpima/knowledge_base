@@ -1,0 +1,123 @@
+# Dữ liệu giả lập do scripts/generate_sample_data.py sinh ra.
+# Mọi tên công ty, công trình, sản phẩm đều là bịa; số liệu không lấy từ nguồn thật nào.
+project:
+  name: Nhà xưởng Thành Công
+  address: 191 Quang Trung, Bình Dương
+  estimated_workdays:
+  - 22
+quotation:
+  code: BG-2026-106
+  issue_date: 2026-01-20
+  currency: VND
+  total_amount: 360021223.22
+  packages:
+  - name: Gói thi công 1
+    work_items:
+    - key: hm01-son-nuoc-ngoai-that
+      name: Sơn nước ngoại thất
+      description: Sơn nước ngoại thất, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 1486.84
+      unit_price: 79716.1
+      concepts:
+      - type: category
+        name: Ngoại thất
+      - type: application
+        name: Tường
+      - type: effect
+        name: Trang trí
+      steps:
+      - name: Xử lý khuyết tật bề mặt
+        product_name: Vietcoat Weather ngoại thất
+        layers: 3
+      - name: Bả matit lớp 2
+        product_name: Vietcoat Weather ngoại thất
+        layers: 1
+      - name: Sơn phủ lớp 2
+        product_name: Vietcoat Weather Plus ngoại thất
+        layers: 3
+    - key: hm02-son-nuoc-noi-that
+      name: Sơn nước nội thất
+      description: Sơn nước nội thất, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 959.34
+      unit_price: 57571.93
+      concepts:
+      - type: category
+        name: Nội thất
+      - type: application
+        name: Tường
+      - type: effect
+        name: Trang trí
+      steps:
+      - name: Bả matit lớp 1
+        product_name: Hoàng Sơn Home nội thất
+        layers: 3
+      - name: Xả nhám hoàn thiện
+        product_name: Hoàng Sơn Home Plus nội thất
+        layers: 3
+    - key: hm03-son-chong-nong-mai-ton
+      name: Sơn chống nóng mái tôn
+      description: Sơn chống nóng mái tôn, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 1095.55
+      unit_price: 143616.89
+      concepts:
+      - type: application
+        name: Kim loại
+      - type: effect
+        name: Chống nóng
+      - type: category
+        name: Ngoại thất
+      steps:
+      - name: Xả nhám hoàn thiện
+        product_name: Vietcoat Cool chống nóng
+        layers: 1
+      - name: Vệ sinh bề mặt
+        product_name: Vietcoat Cool Plus phản xạ nhiệt
+        layers: 3
+    - key: hm04-son-tran-thach-cao
+      name: Sơn trần thạch cao
+      description: Sơn trần thạch cao, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 539.04
+      unit_price: 53661.32
+      concepts:
+      - type: category
+        name: Nội thất
+      - type: application
+        name: Trần
+      - type: effect
+        name: Trang trí
+      steps:
+      - name: Sơn phủ lớp 1
+        product_name: Hoàng Sơn Ceiling siêu trắng
+        layers: 1
+      - name: Xử lý khuyết tật bề mặt
+        product_name: Hoàng Sơn Ceiling siêu trắng
+        layers: 1
+  scope_terms:
+  - scope_type: loại trừ
+    term_type: EXCLUDE
+    description: Chi phí sửa chữa, cải tạo phát sinh kết cấu
+  - scope_type: bao gồm
+    term_type: INCLUDE
+    description: Vật tư sơn chính hãng theo bảng báo giá
+  payment_terms:
+  - percentage: 39.78
+    trigger_type: DEPOSIT
+    trigger_description: Đặt cọc ký hợp đồng
+  - percentage: 37.63
+    trigger_type: MIDTERM
+    trigger_description: Nghiệm thu giai đoạn 1
+  - percentage: 11.83
+    trigger_type: MIDTERM2
+    trigger_description: Nghiệm thu giai đoạn 2
+  - percentage: 10.76
+    trigger_type: FINAL
+    trigger_description: Nghiệm thu bàn giao hoàn công
+  warranty:
+    period: 12
+    period_unit: tháng
+    extend_percent: 5
+    extend_period: 3

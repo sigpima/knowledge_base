@@ -1,0 +1,536 @@
+# Dữ liệu giả lập do scripts/generate_sample_data.py sinh ra.
+# Mọi tên công ty, công trình, sản phẩm đều là bịa; số liệu không lấy từ nguồn thật nào.
+project:
+  name: Biệt thự Lúa Non
+  address: 89 Lê Lợi, Quận 7, TP.HCM
+  estimated_workdays:
+  - 57
+quotation:
+  code: BG-2025-102
+  issue_date: 2025-06-13
+  currency: VND
+  total_amount: 139715998.1
+  packages:
+  - name: Gói thi công 1
+    work_items:
+    - key: hm01-chong-tham-san-thuong
+      name: Chống thấm sân thượng
+      description: Chống thấm sân thượng, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 190
+      unit_price: 146602.58
+      concepts:
+      - type: effect
+        name: Chống thấm
+      - type: application
+        name: Sàn
+      - type: category
+        name: Ngoại thất
+      steps:
+      - name: Xử lý bề mặt
+        product_name: AnTâm Seal PU đàn hồi
+        layers: 3
+      - name: Chống thấm lớp 1
+        product_name: AnTâm Seal gốc xi măng polymer
+        layers: 2
+      - name: Chống thấm lớp 2
+        product_name: AnTâm Seal PU đàn hồi
+        layers: 2
+    - key: hm02-ba-matit-hoan-thien
+      name: Bả matit hoàn thiện
+      description: Bả matit hoàn thiện, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 268.73
+      unit_price: 56206.38
+      concepts:
+      - type: category
+        name: Nội thất
+      - type: application
+        name: Tường
+      - type: stage
+        name: Hoàn thiện
+      steps:
+      - name: Sơn phủ lớp 2
+        product_name: Bột bả Đại Phát nội ngoại thất
+        layers: 3
+      - name: Sơn phủ lớp 1
+        product_name: Bột bả Đại Phát nội ngoại thất
+        layers: 3
+    - key: hm03-son-chong-nong-mai-ton
+      name: Sơn chống nóng mái tôn
+      description: Sơn chống nóng mái tôn, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 389.01
+      unit_price: 174380.21
+      concepts:
+      - type: application
+        name: Kim loại
+      - type: effect
+        name: Chống nóng
+      - type: category
+        name: Ngoại thất
+      steps:
+      - name: Xả nhám hoàn thiện
+        product_name: Vietcoat Cool chống nóng
+        layers: 3
+      - name: Xử lý khuyết tật bề mặt
+        product_name: Vietcoat Cool chống nóng
+        layers: 2
+      - name: Bả matit lớp 1
+        product_name: Vietcoat Cool chống nóng
+        layers: 1
+      - name: Sơn phủ lớp 2
+        product_name: Vietcoat Cool Plus phản xạ nhiệt
+        layers: 3
+    - key: hm04-son-tran-thach-cao
+      name: Sơn trần thạch cao
+      description: Sơn trần thạch cao, thi công theo quy trình nhà sản xuất.
+      unit: m2
+      quantity: 493.65
+      unit_price: 58587.1
+      concepts:
+      - type: category
+        name: Nội thất
+      - type: application
+        name: Trần
+      - type: effect
+        name: Trang trí
+      steps:
+      - name: Chống thấm lớp 2
+        product_name: Hoàng Sơn Ceiling Plus
+        layers: 3
+      - name: Xử lý khuyết tật bề mặt
+        product_name: Hoàng Sơn Ceiling Plus
+        layers: 3
+  scope_terms:
+  - scope_type: loại trừ
+    term_type: EXCLUDE
+    description: Chi phí xin phép thi công (nếu có)
+  - scope_type: loại trừ
+    term_type: EXCLUDE
+    description: Chi phí sửa chữa, cải tạo phát sinh kết cấu
+  payment_terms:
+  - percentage: 30.77
+    trigger_type: DEPOSIT
+    trigger_description: Đặt cọc ký hợp đồng
+  - percentage: 28.21
+    trigger_type: MIDTERM
+    trigger_description: Nghiệm thu giai đoạn 1
+  - percentage: 18.8
+    trigger_type: MIDTERM2
+    trigger_description: Nghiệm thu giai đoạn 2
+  - percentage: 22.22
+    trigger_type: FINAL
+    trigger_description: Nghiệm thu bàn giao hoàn công
+  warranty:
+    period: 12
+    period_unit: tháng
+    extend_percent: 5
+    extend_period: 0
+extras:
+- issue_date: 2025-06-28
+  total_amount: 25000000
+  currency: VND
+  description: Hạng mục phát sinh thêm theo yêu cầu chủ đầu tư
+  quantity: 1
+  unit: công trình
+  unit_price: 25000000
+estimation:
+  total_price: 150531577.87
+  total_details:
+  - type: vật tư chính
+    name: Vật tư chính
+    price: 71418000
+  - type: vật tư phụ
+    name: Vật tư phụ / CCDC
+    price: 5606681.43
+  - type: nhân công
+    name: Nhân công
+    price: 40248400
+  - type: chi phí khác
+    name: Giàn giáo & xử lý bề mặt
+    price: 6492251.67
+  - type: chi phí bảo hành
+    name: Chi phí bảo hành
+    price: 2335922.65
+  - type: lợi nhuận thuần
+    name: Lợi nhuận thuần
+    price: 24430322.12
+  items:
+  - name: Chống thấm sân thượng
+    work_item: hm01-chong-tham-san-thuong
+    main_unit_price: 71296.84
+    sub_unit_price: 6629.21
+    material_unit_price: 77926.05
+    total_price_area_based: 13546400
+    total_price_round: 13940000
+    material_unit_price_with_color_mixing_cost: 77926.05
+    labor_unit_price: 42240
+    profit_margin: 0.22
+    labor:
+      area: 190
+      kn_manday: 11.4
+      main_out_manday: 0
+      sub_out_manday: 5.7
+      kn_total_price: 4104000
+      main_out_total_price: 0
+      sub_out_total_price: 1824000
+      kn_out_total_price: 5472000
+      final_unit_price_type: all_out
+      labor_coeff: 1.1
+      labor_unit_price: 42240
+      processes:
+      - name: Xử lý bề mặt
+        main_labors_kn: 2
+        main_labors_out: 0
+        sub_labors_out: 1
+        days: 1.9
+        kn_manday: 3.8
+        main_out_manday: 0
+        sub_out_manday: 1.9
+      - name: Chống thấm lớp 1
+        main_labors_kn: 2
+        main_labors_out: 0
+        sub_labors_out: 1
+        days: 1.9
+        kn_manday: 3.8
+        main_out_manday: 0
+        sub_out_manday: 1.9
+      - name: Chống thấm lớp 2
+        main_labors_kn: 2
+        main_labors_out: 0
+        sub_labors_out: 1
+        days: 1.9
+        kn_manday: 3.8
+        main_out_manday: 0
+        sub_out_manday: 1.9
+    main_materials:
+    - product_segment: TRUNG CẤP
+      product_line: AnTâm Seal
+      product_name: AnTâm Seal gốc xi măng polymer
+      layers: 2
+      package_type: 20L/thùng
+      theoretical_rate: 1.21
+      construction_loss: 0.0456
+      actual_rate_per_litter: 1.15
+      actual_rate_per_box: 23
+      box_price: 820000
+      color_mixing_price: 0
+      unit_price_per_m2: 35652.17
+      percent_usage: 1
+      area: 190
+      total_price_area_based: 13546400
+      litters: 330.43
+      boxes: 16.52
+      total_price_round: 13940000
+  - name: Bả matit hoàn thiện
+    work_item: hm02-ba-matit-hoan-thien
+    main_unit_price: 22171.55
+    sub_unit_price: 1334.21
+    material_unit_price: 23173.58
+    total_price_area_based: 5958160
+    total_price_round: 6066000
+    material_unit_price_with_color_mixing_cost: 23173.58
+    labor_unit_price: 21769.95
+    profit_margin: 0.2506
+    labor:
+      area: 268.73
+      kn_manday: 3.56
+      main_out_manday: 0
+      sub_out_manday: 11.28
+      kn_total_price: 1281600
+      main_out_total_price: 0
+      sub_out_total_price: 3609600
+      kn_out_total_price: 1708800
+      final_unit_price_type: all_out
+      labor_coeff: 1.1
+      labor_unit_price: 21769.95
+      processes:
+      - name: Sơn phủ lớp 2
+        main_labors_kn: 2
+        main_labors_out: 0
+        sub_labors_out: 4
+        days: 1.78
+        kn_manday: 3.56
+        main_out_manday: 0
+        sub_out_manday: 7.12
+      - name: Sơn phủ lớp 1
+        main_labors_kn: 0
+        main_labors_out: 0
+        sub_labors_out: 4
+        days: 1.04
+        kn_manday: 0
+        main_out_manday: 0
+        sub_out_manday: 4.16
+    main_materials:
+    - product_segment: CAO CẤP
+      product_line: Đại Phát Putty Pro
+      product_name: Bột bả Đại Phát Pro
+      layers: 2
+      package_type: 40L/thùng
+      theoretical_rate: 1.59
+      construction_loss: 0.0455
+      actual_rate_per_litter: 1.52
+      actual_rate_per_box: 60.8
+      box_price: 674000
+      color_mixing_price: 0
+      unit_price_per_m2: 11085.53
+      percent_usage: 1
+      area: 268.73
+      total_price_area_based: 5958160
+      litters: 353.59
+      boxes: 8.84
+      total_price_round: 6066000
+  - name: Sơn chống nóng mái tôn
+    work_item: hm03-son-chong-nong-mai-ton
+    main_unit_price: 88891.37
+    sub_unit_price: 10109.24
+    material_unit_price: 98528.32
+    total_price_area_based: 34579630
+    total_price_round: 37993000
+    material_unit_price_with_color_mixing_cost: 99170.98
+    labor_unit_price: 50272.95
+    profit_margin: 0.1719
+    labor:
+      area: 389.01
+      kn_manday: 12.67
+      main_out_manday: 7.85
+      sub_out_manday: 29.53
+      kn_total_price: 4561200
+      main_out_total_price: 3768000
+      sub_out_total_price: 9449600
+      kn_out_total_price: 6081600
+      final_unit_price_type: has_kn
+      labor_coeff: 1.1
+      labor_unit_price: 50272.95
+      processes:
+      - name: Xả nhám hoàn thiện
+        main_labors_kn: 1
+        main_labors_out: 1
+        sub_labors_out: 2
+        days: 3.03
+        kn_manday: 3.03
+        main_out_manday: 3.03
+        sub_out_manday: 6.06
+      - name: Xử lý khuyết tật bề mặt
+        main_labors_kn: 2
+        main_labors_out: 1
+        sub_labors_out: 2
+        days: 2.49
+        kn_manday: 4.98
+        main_out_manday: 2.49
+        sub_out_manday: 4.98
+      - name: Bả matit lớp 1
+        main_labors_kn: 2
+        main_labors_out: 1
+        sub_labors_out: 2
+        days: 2.33
+        kn_manday: 4.66
+        main_out_manday: 2.33
+        sub_out_manday: 4.66
+      - name: Sơn phủ lớp 2
+        main_labors_kn: 0
+        main_labors_out: 0
+        sub_labors_out: 3
+        days: 4.61
+        kn_manday: 0
+        main_out_manday: 0
+        sub_out_manday: 13.83
+    main_materials:
+    - product_segment: CAO CẤP
+      product_line: Vietcoat Cool Plus
+      product_name: Vietcoat Cool Plus phản xạ nhiệt
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 4.31
+      construction_loss: 0.1035
+      actual_rate_per_litter: 3.86
+      actual_rate_per_box: 69.48
+      box_price: 3939000
+      color_mixing_price: 25000
+      unit_price_per_m2: 56692.57
+      percent_usage: 0.1655
+      area: 389.01
+      total_price_area_based: 7287150
+      litters: 33.36
+      boxes: 1.85
+      total_price_round: 7878000
+    - product_segment: TRUNG CẤP
+      product_line: Vietcoat Cool
+      product_name: Vietcoat Cool chống nóng
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 4.17
+      construction_loss: 0.0419
+      actual_rate_per_litter: 4
+      actual_rate_per_box: 72
+      box_price: 2131000
+      color_mixing_price: 25000
+      unit_price_per_m2: 29597.22
+      percent_usage: 0.4332
+      area: 389.01
+      total_price_area_based: 9973080
+      litters: 84.26
+      boxes: 4.68
+      total_price_round: 10655000
+    - product_segment: CAO CẤP
+      product_line: Vietcoat Cool Plus
+      product_name: Vietcoat Cool Plus phản xạ nhiệt
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 4.2
+      construction_loss: 0.0717
+      actual_rate_per_litter: 3.9
+      actual_rate_per_box: 70.2
+      box_price: 3892000
+      color_mixing_price: 15000
+      unit_price_per_m2: 55441.6
+      percent_usage: 0.4013
+      area: 389.01
+      total_price_area_based: 17319400
+      litters: 80.06
+      boxes: 4.45
+      total_price_round: 19460000
+  - name: Sơn trần thạch cao
+    work_item: hm04-son-tran-thach-cao
+    main_unit_price: 21415.96
+    sub_unit_price: 2478.11
+    material_unit_price: 23600.82
+    total_price_area_based: 10571990
+    total_price_round: 13419000
+    material_unit_price_with_color_mixing_cost: 24086.99
+    labor_unit_price: 21960.34
+    profit_margin: 0.2859
+    labor:
+      area: 493.65
+      kn_manday: 15.02
+      main_out_manday: 2.32
+      sub_out_manday: 10.42
+      kn_total_price: 5407200
+      main_out_total_price: 1113600
+      sub_out_total_price: 3334400
+      kn_out_total_price: 7209600
+      final_unit_price_type: has_kn
+      labor_coeff: 1.1
+      labor_unit_price: 21960.34
+      processes:
+      - name: Chống thấm lớp 2
+        main_labors_kn: 3
+        main_labors_out: 0
+        sub_labors_out: 1
+        days: 3.46
+        kn_manday: 10.38
+        main_out_manday: 0
+        sub_out_manday: 3.46
+      - name: Xử lý khuyết tật bề mặt
+        main_labors_kn: 2
+        main_labors_out: 1
+        sub_labors_out: 3
+        days: 2.32
+        kn_manday: 4.64
+        main_out_manday: 2.32
+        sub_out_manday: 6.96
+    main_materials:
+    - product_segment: CAO CẤP
+      product_line: Hoàng Sơn Ceiling Plus
+      product_name: Hoàng Sơn Ceiling Plus
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 13.33
+      construction_loss: 0.0756
+      actual_rate_per_litter: 12.32
+      actual_rate_per_box: 221.76
+      box_price: 2297000
+      color_mixing_price: 40000
+      unit_price_per_m2: 10358.04
+      percent_usage: 0.5183
+      area: 493.65
+      total_price_area_based: 5306070
+      litters: 41.54
+      boxes: 2.31
+      total_price_round: 6891000
+    - product_segment: CAO CẤP
+      product_line: Hoàng Sơn Ceiling Plus
+      product_name: Hoàng Sơn Ceiling Plus
+      layers: 2
+      package_type: 18L/thùng
+      theoretical_rate: 11.55
+      construction_loss: 0.0537
+      actual_rate_per_litter: 10.93
+      actual_rate_per_box: 196.74
+      box_price: 2176000
+      color_mixing_price: 40000
+      unit_price_per_m2: 11060.28
+      percent_usage: 0.4817
+      area: 493.65
+      total_price_area_based: 5265920
+      litters: 43.51
+      boxes: 2.42
+      total_price_round: 6528000
+  sub_materials:
+  - type: vật tư phụ
+    name: Bạt che phủ
+    unit: m2
+    unit_price: 171551
+    total_price: 3935379.94
+    usages:
+    - work_item: hm02-ba-matit-hoan-thien
+      amount: 4.48
+      total_price: 768548.48
+    - work_item: hm03-son-chong-nong-mai-ton
+      amount: 18.46
+      total_price: 3166831.46
+  - type: CCDC
+    name: Rulo sơn
+    unit: cái
+    unit_price: 73937
+    total_price: 648427.49
+    usages:
+    - work_item: hm01-chong-tham-san-thuong
+      amount: 8.77
+      total_price: 648427.49
+  - type: CCDC
+    name: Cọ sơn
+    unit: cái
+    unit_price: 135480
+    total_price: 1022874
+    usages:
+    - work_item: hm02-ba-matit-hoan-thien
+      amount: 7.55
+      total_price: 1022874
+  products_to_buy:
+  - product_name: AnTâm Seal gốc xi măng polymer
+    package_type: 20L/thùng
+    boxes: 16.52
+    boxes_round: 17
+    boxes_price: 13940000
+    boxes_unit_price: 820000
+    total_price_round: 13940000
+  - product_name: Bột bả Đại Phát Pro
+    package_type: 40L/thùng
+    boxes: 8.84
+    boxes_round: 9
+    boxes_price: 6066000
+    boxes_unit_price: 674000
+    total_price_round: 6066000
+  - product_name: Vietcoat Cool Plus phản xạ nhiệt
+    package_type: 18L/thùng
+    boxes: 6.3
+    boxes_round: 7
+    boxes_price: 27573000
+    boxes_unit_price: 3939000
+    total_price_round: 27573000
+  - product_name: Vietcoat Cool chống nóng
+    package_type: 18L/thùng
+    boxes: 4.68
+    boxes_round: 5
+    boxes_price: 10655000
+    boxes_unit_price: 2131000
+    total_price_round: 10655000
+  - product_name: Hoàng Sơn Ceiling Plus
+    package_type: 18L/thùng
+    boxes: 4.73
+    boxes_round: 5
+    boxes_price: 11485000
+    boxes_unit_price: 2297000
+    total_price_round: 11485000
