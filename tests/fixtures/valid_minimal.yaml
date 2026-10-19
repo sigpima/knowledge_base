@@ -1,0 +1,134 @@
+# Ví dụ nhỏ nhưng đầy đủ các khối: công trình, báo giá, phát sinh, dự toán.
+project:
+  name: Biệt thự Hoa Sữa
+  address: 12 Đường Số 5, Quận 7, TP.HCM
+  estimated_workdays: [30, 6]
+
+quotation:
+  code: BG-2026-001
+  issue_date: 2026-03-21
+  currency: VND
+  packages:
+    - name: Gói sơn ngoại thất
+      work_items:
+        - key: ngoai-that-tuong
+          name: Sơn nước ngoại thất
+          description: Sơn hoàn thiện tường ngoại thất, 2 lớp phủ.
+          unit: m2
+          quantity: 500
+          unit_price: 102000
+          concepts:
+            - {type: category, name: Ngoại thất}
+            - {type: application, name: Tường}
+          steps:
+            - {name: Vệ sinh bề mặt}
+            - {name: Sơn lót, product_name: Vietcoat Primer-1, layers: 1}
+            - {name: Sơn phủ, product_name: Vietcoat Top-2, layers: 2}
+        - key: chong-tham-san-thuong
+          name: Chống thấm sân thượng
+          unit: m2
+          quantity: 100
+          unit_price: 180000
+          concepts:
+            - {type: effect, name: Chống thấm}
+            - {type: application, name: Sàn}
+          steps:
+            - {name: Xử lý bề mặt}
+            - {name: Chống thấm 2 lớp, product_name: Vietcoat Seal-11, layers: 2}
+    - name: Gói hạng mục phụ
+      work_items:
+        - key: son-lan-can
+          name: Sơn dầu lan can sắt
+          unit: m2
+          quantity: 40
+          unit_price: 95000
+          concepts:
+            - {type: application, name: Kim loại}
+  scope_terms:
+    - {scope_type: bao gồm, term_type: INCLUDE, description: Vật tư sơn theo bảng báo giá}
+    - {scope_type: loại trừ, term_type: EXCLUDE, description: Chi phí xin phép thi công}
+  payment_terms:
+    - {percentage: 30, trigger_type: DEPOSIT, trigger_description: Đặt cọc ký hợp đồng}
+    - {percentage: 70, trigger_type: FINAL, trigger_description: Nghiệm thu bàn giao}
+  warranty:
+    period: 24
+    period_unit: tháng
+
+extras:
+  - issue_date: 2026-04-02
+    description: Xử lý nứt chân tường phát sinh
+    quantity: 12
+    unit: m
+    unit_price: 150000
+    total_amount: 1800000
+    currency: VND
+
+estimation:
+  total_price: 79500000
+  total_details:
+    - {type: vật tư chính, name: Vật tư chính, price: 40000000}
+    - {type: nhân công, name: Nhân công, price: 20000000}
+    - {type: lợi nhuận, name: Lợi nhuận, price: 12000000}
+  items:
+    - name: Sơn nước ngoại thất
+      work_item: ngoai-that-tuong
+      material_unit_price: 60000
+      labor_unit_price: 25000
+      profit_margin: 0.2
+      labor:
+        area: 500
+        kn_manday: 20
+        main_out_manday: 10
+        sub_out_manday: 5
+        kn_total_price: 6000000
+        main_out_total_price: 3500000
+        sub_out_total_price: 1500000
+        labor_unit_price: 25000
+        processes:
+          - {name: Vệ sinh bề mặt, days: 2, kn_manday: 4, main_out_manday: 2, sub_out_manday: 1}
+          - {name: Sơn phủ, days: 4, kn_manday: 16, main_out_manday: 8, sub_out_manday: 4}
+      main_materials:
+        - product_segment: TRUNG CẤP
+          product_name: Vietcoat Top-2
+          layers: 2
+          package_type: thùng 18L
+          box_price: 1800000
+          unit_price_per_m2: 36000
+          area: 500
+          total_price_area_based: 18000000
+    - name: Chống thấm sân thượng
+      work_item: chong-tham-san-thuong
+      material_unit_price: 100000
+      labor_unit_price: 50000
+      profit_margin: 0.2
+      labor:
+        area: 100
+        kn_manday: 8
+        main_out_manday: 0
+        sub_out_manday: 0
+        kn_total_price: 5000000
+        labor_unit_price: 50000
+        processes:
+          - {name: Chống thấm 2 lớp, days: 2, kn_manday: 8}
+      main_materials:
+        - product_segment: CAO CẤP
+          product_name: Vietcoat Seal-11
+          layers: 2
+          unit_price_per_m2: 100000
+          area: 100
+          total_price_area_based: 10000000
+  sub_materials:
+    - type: vật tư phụ
+      name: Băng keo giấy
+      unit: cuộn
+      unit_price: 15000
+      total_price: 300000
+      usages:
+        - {work_item: ngoai-that-tuong, amount: 20, total_price: 300000}
+  products_to_buy:
+    - product_name: Vietcoat Top-2
+      package_type: thùng 18L
+      boxes: 9.5
+      boxes_round: 10
+      boxes_price: 1800000
+      total_price_round: 18000000
