@@ -40,14 +40,19 @@ def db_engine():
         conn.execute(text("DROP SCHEMA IF EXISTS quotation CASCADE"))
 
 
+def _truncate_all(session) -> None:
+    tables = ", ".join(t.fullname for t in Base.metadata.sorted_tables)
+    session.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+    session.commit()
+
+
 @pytest.fixture
 def db_session(db_engine):
     session = SessionLocal()
+    _truncate_all(session)  # bắt đầu từ DB trống kể cả khi lần chạy trước để lại dữ liệu
     try:
         yield session
     finally:
         session.rollback()
-        tables = ", ".join(t.fullname for t in Base.metadata.sorted_tables)
-        session.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
-        session.commit()
+        _truncate_all(session)
         session.close()

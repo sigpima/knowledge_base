@@ -202,7 +202,7 @@ def _build_item(rng, entry: CatalogItem, index: int, ctx: _ProjectContext, pin: 
         total_w = sum(weights)
         rows_spec = []
         for w in weights:
-            product = rng.choice(entry.products)
+            product = rng.choices(entry.products, weights=[0.7, 0.3])[0]  # phần lớn dùng dòng trung cấp
             low, high = entry.box_price[product[0]]
             rows_spec.append((product, D(w / total_w, "0.0001"), rng.randint(low // 1000, high // 1000) * 1000))
 
