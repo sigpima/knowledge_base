@@ -18,6 +18,7 @@ os.environ["DATABASE_URL"] = _TEST_DATABASE_URL
 os.environ["DATABASE_URL_READONLY"] = _TEST_DATABASE_URL_READONLY
 
 from sqlalchemy import text  # noqa: E402
+from sqlalchemy.engine import make_url  # noqa: E402
 
 from app.infrastructure.database import Base  # noqa: E402
 from app.infrastructure.database.postgres.session import engine, SessionLocal  # noqa: E402
@@ -29,6 +30,10 @@ def db_engine():
     with engine.begin() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS quotation"))
     Base.metadata.create_all(engine)
+    read_only_user = make_url(_TEST_DATABASE_URL_READONLY).username
+    with engine.begin() as conn:
+        conn.execute(text(f'GRANT USAGE ON SCHEMA quotation TO "{read_only_user}"'))
+        conn.execute(text(f'GRANT SELECT ON ALL TABLES IN SCHEMA quotation TO "{read_only_user}"'))
     yield engine
     Base.metadata.drop_all(engine)
     with engine.begin() as conn:

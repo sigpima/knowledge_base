@@ -287,7 +287,7 @@ def search_work_items(
     limit: int = 50,
 ) -> Dict[str, Any]:
     """Tìm kiếm tự do theo tên/mô tả hạng mục, có thể lọc thêm theo cặp
-    concept type->name (vd {"application": "Ngoại thất"}). Trả về items
+    concept type->name (vd {"category": "Ngoại thất"}). Trả về items
     (tối đa `limit` dòng) và matched_count -- tổng số kết quả thực sự
     khớp; items chỉ bị cắt bớt khi matched_count > len(items), mỗi dòng
     trả về đều là kết quả khớp thật, đầy đủ, không cần xác minh lại bằng
