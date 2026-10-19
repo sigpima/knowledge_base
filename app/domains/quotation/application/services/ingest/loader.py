@@ -135,6 +135,8 @@ def load_quotation_text(text: str, source_name: str = "") -> QuotationFile:
         raw = yaml.load(text, Loader=_SafeQuotationLoader)
     except yaml.YAMLError as exc:
         raise QuotationFileError([f"<file>: YAML không hợp lệ: {exc}"], source_name) from exc
+    except RecursionError as exc:
+        raise QuotationFileError(["<file>: YAML lồng quá sâu"], source_name) from exc
     if not isinstance(raw, dict):
         raise QuotationFileError(["<file>: nội dung gốc phải là một mapping YAML"], source_name)
 

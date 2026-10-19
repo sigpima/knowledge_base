@@ -155,3 +155,9 @@ def test_term_type_longer_than_column_rejected():
         d["quotation"]["scope_terms"][0]["term_type"] = "X" * 11
 
     assert any(e.startswith("quotation.scope_terms[0].term_type") for e in _errors(_mutated(mutate)))
+
+
+def test_deeply_nested_yaml_is_rejected_not_crashed():
+    errors = _errors("a: " + "[" * 20000 + "]" * 20000 + "\n")
+
+    assert errors
