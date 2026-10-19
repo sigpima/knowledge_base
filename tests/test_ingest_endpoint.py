@@ -27,7 +27,8 @@ def test_post_ingest_valid_returns_201_and_rows_exist(db_session):
 
     assert response.status_code == 201
     body = response.json()
-    assert set(body) == {"project_id", "quotation_id", "work_item_count", "has_estimation", "extra_count"}
+    assert set(body) == {"project_id", "quotation_id", "work_item_count", "has_estimation", "extra_count", "status"}
+    assert body["status"] == "created"
     assert (body["work_item_count"], body["has_estimation"], body["extra_count"]) == (3, True, 1)
     assert _count(db_session, WorkItemModel) == 3
     assert db_session.get(ProjectModel, body["project_id"]).source_file == "hoa-sua.yaml"
@@ -43,13 +44,42 @@ def test_post_ingest_invalid_returns_422_with_paths(db_session):
     assert _count(db_session, ProjectModel) == 0
 
 
-def test_post_ingest_duplicate_returns_409(db_session):
+CHANGED_TEXT = FIXTURE_TEXT.replace("unit_price: 95000", "unit_price: 96000")
+
+
+def test_post_same_content_again_returns_200_unchanged(db_session):
+    first = _post(FIXTURE_TEXT)
+    second = _post(FIXTURE_TEXT)
+
+    assert (first.status_code, second.status_code) == (201, 200)
+    assert second.json()["status"] == "unchanged"
+    assert second.json()["project_id"] == first.json()["project_id"]
+    assert _count(db_session, ProjectModel) == 1
+
+
+def test_post_same_name_different_content_returns_409_with_hint(db_session):
     assert _post(FIXTURE_TEXT).status_code == 201
 
-    response = _post(FIXTURE_TEXT)
+    response = _post(CHANGED_TEXT)
 
     assert response.status_code == 409
+    assert "on_conflict=replace" in response.json()["detail"]
     assert _count(db_session, ProjectModel) == 1
+
+
+def test_post_with_on_conflict_replace_swaps_the_project(db_session):
+    first = _post(FIXTURE_TEXT)
+
+    response = _post(CHANGED_TEXT, on_conflict="replace")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "replaced"
+    assert response.json()["project_id"] != first.json()["project_id"]
+    assert _count(db_session, ProjectModel) == 1
+
+
+def test_post_with_unknown_on_conflict_value_returns_422(db_session):
+    assert _post(FIXTURE_TEXT, on_conflict="overwrite").status_code == 422
 
 
 def test_post_ingest_oversized_body_returns_413(db_session, monkeypatch):

@@ -3,8 +3,9 @@ from typing import Dict, Optional
 
 import dataclasses
 from pathlib import Path
+from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
@@ -41,10 +42,10 @@ def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
-def _ingest_text(text: str, source_file: str):
+def _ingest_text(text: str, source_file: str, on_conflict: str):
     file = load_quotation_text(text, source_file)
     with SessionLocal() as session:
-        return ingest_quotation(session, file, source_file)
+        return ingest_quotation(session, file, source_file, on_conflict=on_conflict)
 
 
 async def _read_limited_body(request: Request) -> bytes:
@@ -63,8 +64,16 @@ async def _read_limited_body(request: Request) -> bytes:
 
 
 @app.post("/ingest", status_code=201)
-async def ingest(request: Request, source_file: str = "http-upload.yaml"):
+async def ingest(
+    request: Request,
+    response: Response,
+    source_file: str = "http-upload.yaml",
+    on_conflict: Literal["error", "replace"] = "error",
+):
     """Nhận một file báo giá YAML trong body, kiểm tra rồi ghi vào DB.
+
+    Công trình được nhận diện bằng tên: cùng tên + cùng nội dung -> 200 `unchanged`; cùng tên + nội dung khác -> 409,
+    trừ khi `?on_conflict=replace` (thay thế toàn bộ, 200 `replaced`).
 
     Bắt buộc Content-Type YAML: loại `text/plain` và form là thứ duy nhất một trang web bất kỳ
     có thể gửi tới 127.0.0.1 mà trình duyệt không hỏi trước (preflight), nên từ chối chúng.
@@ -80,11 +89,15 @@ async def ingest(request: Request, source_file: str = "http-upload.yaml"):
     except UnicodeDecodeError:
         return JSONResponse(status_code=422, content={"errors": ["<file>: body phải là UTF-8"]})
     try:
-        result = await run_in_threadpool(_ingest_text, text, Path(source_file).name or "http-upload.yaml")
+        result = await run_in_threadpool(
+            _ingest_text, text, Path(source_file).name or "http-upload.yaml", on_conflict
+        )
     except QuotationFileError as exc:
         return JSONResponse(status_code=422, content={"errors": exc.errors})
     except DuplicateProjectError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
+    if result.status != "created":
+        response.status_code = 200  # 201 chỉ khi thật sự tạo mới
     return dataclasses.asdict(result)
 
 

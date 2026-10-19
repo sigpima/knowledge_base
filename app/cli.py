@@ -21,14 +21,14 @@ def _collect(paths: list[str]) -> list[Path]:
     return files
 
 
-def ingest_files(files: list[Path]) -> int:
+def ingest_files(files: list[Path], on_conflict: str = "error") -> int:
     """Ingest từng file; file lỗi chỉ bị bỏ qua và báo ra stderr. Trả về số file lỗi."""
     failures = 0
     for path in files:
         try:
             file = load_quotation_file(path)
             with SessionLocal() as session:
-                result = ingest_quotation(session, file, path.name)
+                result = ingest_quotation(session, file, path.name, on_conflict=on_conflict)
             print(f"{path.name}: {json.dumps(dataclasses.asdict(result), ensure_ascii=False)}")
         except QuotationFileError as exc:
             failures += 1
@@ -49,10 +49,14 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     ingest = sub.add_parser("ingest", help="nhập file báo giá YAML vào DB")
     ingest.add_argument("paths", nargs="+")
+    ingest.add_argument(
+        "--replace", action="store_true",
+        help="nếu đã có công trình cùng tên nhưng nội dung khác thì thay thế toàn bộ (mặc định: báo lỗi)",
+    )
     args = parser.parse_args(argv)
 
     init_db()
-    failures = ingest_files(_collect(args.paths))
+    failures = ingest_files(_collect(args.paths), on_conflict="replace" if args.replace else "error")
     return 1 if failures else 0
 
 

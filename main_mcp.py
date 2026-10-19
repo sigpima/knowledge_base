@@ -14,6 +14,7 @@ from app.mcp.sql_guard import ensure_limit, validate_select_only
 mcp = MCPServer("knowledge-base")
 # Chỉ kết nối bằng role Postgres chỉ đọc: server MCP không bao giờ ghi DB.
 knowledge_service = KnowledgeService(session_factory=ReadonlySessionLocal)
+RUN_SQL_MAX_ROWS = 200
 
 
 def _decimal_to_str(value: Decimal | None) -> str | None:
@@ -431,7 +432,8 @@ def compare_labor_cost(project_id: int) -> Dict[str, Any] | None:
 def run_readonly_sql(query: str) -> Dict[str, Any]:
     """Chạy 1 câu SQL SELECT tuỳ ý (chỉ đọc) trên schema quotation, dùng
     cho các câu hỏi mà các tool có cấu trúc ở trên không đáp ứng được.
-    Chỉ SELECT, 1 statement duy nhất, giới hạn số dòng, chạy dưới 1 role
+    Chỉ SELECT (hoặc WITH ... SELECT), 1 statement duy nhất, tối đa 200 dòng
+    (trường truncated cho biết kết quả có bị cắt không), chạy dưới 1 role
     DB chỉ có quyền SELECT. LUÔN schema-qualify tên bảng dạng
     `quotation.<table>` (vd `quotation.work_item`, không bao giờ dùng
     `work_item` trần hay `public.work_item`) -- không có schema `public`
@@ -453,18 +455,21 @@ def run_readonly_sql(query: str) -> Dict[str, Any]:
     except ValueError as exc:
         return {"error": str(exc)}
 
-    limited_query = ensure_limit(query)
+    # Xin dư 1 dòng để biết kết quả có bị cắt hay không mà không phải đếm toàn bộ.
+    limited_query = ensure_limit(query, RUN_SQL_MAX_ROWS + 1)
 
     try:
         with ReadonlySessionLocal() as session:
             result = session.execute(sql_text(limited_query))
-            rows = [dict(row._mapping) for row in result]
+            rows = [dict(row._mapping) for row in result.fetchmany(RUN_SQL_MAX_ROWS + 1)]
     except Exception as exc:
         # Best-effort boundary: a bad or overly expensive query from the agent
         # must surface as a tool error, not crash the MCP session.
         return {"error": str(exc)}
 
-    return {"rows": rows, "row_count": len(rows)}
+    truncated = len(rows) > RUN_SQL_MAX_ROWS
+    rows = rows[:RUN_SQL_MAX_ROWS]
+    return {"rows": rows, "row_count": len(rows), "truncated": truncated}
 
 
 def main() -> None:

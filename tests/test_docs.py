@@ -70,3 +70,10 @@ def test_concept_metadata_matches_the_enforced_vocabulary():
 
     missing = [f"{kind}: {name}" for kind, names in CONCEPT_VOCABULARY.items() for name in names if name not in doc]
     assert missing == []
+
+
+def test_data_format_doc_describes_duplicate_handling():
+    doc = (ROOT / "docs" / "data-format.md").read_text(encoding="utf-8")
+
+    for phrase in ("unchanged", "on_conflict=replace", "--replace", "content_hash", "409"):
+        assert phrase in doc, phrase

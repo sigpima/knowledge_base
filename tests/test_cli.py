@@ -44,9 +44,22 @@ def test_cli_keeps_going_after_a_bad_file_and_exits_nonzero(db_session, tmp_path
     assert "a-broken.yaml" in capsys.readouterr().err
 
 
-def test_cli_reports_duplicate_and_exits_nonzero(db_session, tmp_path):
+def test_cli_same_file_again_is_unchanged_and_succeeds(db_session, tmp_path, capsys):
     path = _write_variant(tmp_path, "a.yaml", "Công trình A")
     assert main(["ingest", str(path)]) == 0
 
+    assert main(["ingest", str(path)]) == 0
+    assert '"status": "unchanged"' in capsys.readouterr().out
+    assert _projects(db_session) == 1
+
+
+def test_cli_conflicting_content_exits_nonzero_unless_replace(db_session, tmp_path, capsys):
+    path = _write_variant(tmp_path, "a.yaml", "Công trình A")
+    assert main(["ingest", str(path)]) == 0
+    path.write_text(path.read_text(encoding="utf-8").replace("unit_price: 95000", "unit_price: 96000"), encoding="utf-8")
+
     assert main(["ingest", str(path)]) == 1
+    assert "--replace" in capsys.readouterr().err
+    assert main(["ingest", "--replace", str(path)]) == 0
+    assert '"status": "replaced"' in capsys.readouterr().out
     assert _projects(db_session) == 1

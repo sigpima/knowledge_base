@@ -253,3 +253,19 @@ def test_duplicate_mapping_key_rejected():
     )
 
     assert any("unit_price" in e and "lặp" in e for e in _errors(text))
+
+
+@pytest.mark.parametrize("value", ["1:30", "12:30:45", "-1:30", "1:30.5"])
+def test_sexagesimal_numbers_are_rejected_instead_of_silently_becoming_minutes(value):
+    text = FIXTURE.read_text(encoding="utf-8").replace("quantity: 40", f"quantity: {value}")
+
+    errors = _errors(text)
+
+    assert any(value in e and "hệ 60" in e for e in errors)
+
+
+def test_quoted_time_like_text_is_still_a_plain_string():
+    def mutate(d):
+        d["quotation"]["packages"][0]["work_items"][0]["description"] = "1:30"
+
+    assert load_quotation_text(_mutated(mutate), "t.yaml").quotation.packages[0].work_items[0].description == "1:30"

@@ -20,9 +20,11 @@ class ProjectModel(Base):
         primary_key=True,
         autoincrement=True,
     )
+    # Duy nhất: DB là chốt chặn cuối cho hai lần ingest đồng thời cùng tên công trình.
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
+        unique=True,
     )
     address: Mapped[str] = mapped_column(
         String(255),
@@ -30,6 +32,11 @@ class ProjectModel(Base):
     )
     source_file: Mapped[Optional[str]] = mapped_column(
         String(255),
+        nullable=True,
+    )
+    # sha256 của nội dung file YAML đã chuẩn hoá (xem ingest/writer.py); cùng tên + cùng hash = nhập lại file cũ.
+    content_hash: Mapped[Optional[str]] = mapped_column(
+        String(64),
         nullable=True,
     )
     created_at: Mapped[Optional[date]] = mapped_column(

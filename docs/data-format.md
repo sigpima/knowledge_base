@@ -108,17 +108,33 @@ Loader từ chối mục dự toán nào lệch quá 0,5% so với `unit_price` 
 - `extras[*].metadata` là JSON phẳng gồm chuỗi, số nguyên, true/false hoặc null (không dùng số thập phân hay mapping lồng).
 - Chuỗi Unicode được chuẩn hoá NFC; BOM đầu file được bỏ qua.
 - Không dùng alias YAML (`*x`), không lồng quá sâu, chỉ `safe_load`: file độc hại bị từ chối với lỗi 422, không làm sập server.
-- Tên công trình (`project.name`) không được trùng với công trình đã có; ingest trả 409 (HTTP) hoặc báo lỗi (CLI).
+- Số viết dạng `1:30` bị từ chối: YAML 1.1 đọc nó là số hệ 60 (= 90) chứ không phải chuỗi. Đặt trong dấu nháy nếu là chữ.
+
+## Gửi lại hoặc sửa một công trình
+
+Công trình được nhận diện bằng `project.name` (duy nhất, DB có ràng buộc `UNIQUE`). Mỗi lần ingest, nội dung file được
+chuẩn hoá (không phụ thuộc thứ tự khoá, khoảng trắng, hay `95000` so với `95000.00`) rồi băm sha256 thành `project.content_hash`:
+
+| Tình huống | Kết quả |
+|---|---|
+| Chưa có công trình tên đó | Ghi mới. HTTP `201`, `"status": "created"` |
+| Có rồi, **cùng** nội dung | Không ghi gì. HTTP `200`, `"status": "unchanged"`; gửi lại file cũ (hoặc thử lại sau lỗi mạng) là an toàn |
+| Có rồi, nội dung **khác** | Từ chối. HTTP `409` kèm gợi ý; CLI báo lỗi |
+| Như dòng trên, kèm `?on_conflict=replace` (HTTP) hoặc `--replace` (CLI) | Xoá toàn bộ cây dữ liệu cũ và ghi cây mới trong **cùng một transaction**. HTTP `200`, `"status": "replaced"`; nếu ghi mới lỗi thì dữ liệu cũ còn nguyên |
+
+Hai request cùng tên gửi đồng thời không thể cùng thành công: request đến sau bị ràng buộc `UNIQUE` chặn, rồi được xử lý như bảng trên
+(cùng nội dung thì `unchanged`, khác nội dung thì `409`). Hệ thống không giữ nhiều phiên bản của một công trình.
 
 ## Cách nhập
 
 ```bash
 # Dòng lệnh: một hoặc nhiều file, hoặc cả thư mục
 python -m app.cli ingest data/sample
+python -m app.cli ingest --replace cong-trinh-da-sua.yaml    # thay thế công trình cùng tên
 
 # HTTP (service ingest, cổng 8000)
 curl -X POST --data-binary @file.yaml -H 'Content-Type: application/x-yaml' \
-     'http://127.0.0.1:8000/ingest?source_file=file.yaml'
+     'http://127.0.0.1:8000/ingest?source_file=file.yaml'          # thêm &on_conflict=replace để thay thế
 ```
 
 Body phải có `Content-Type` là `application/x-yaml`, `application/yaml` hoặc `text/yaml` (nếu không: `415`). Lỗi kiểm tra trả về `422` với `{"errors": ["quotation.packages[0].work_items[1].key: ...", ...]}`.

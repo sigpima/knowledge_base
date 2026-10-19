@@ -47,6 +47,8 @@ trên DB nào đó, hoặc `CREATE ROLE knowledge_base_ro LOGIN PASSWORD '...'`)
 - Tiền/số lượng luôn `Decimal`, không `float`. File YAML đọc số thập phân thành `Decimal` trực tiếp.
 - Dataclass cho DTO/entity; Pydantic chỉ cho dữ liệu vào từ ngoài (YAML, HTTP); SQLAlchemy 2.0 `Mapped[...]` cho bảng.
 - Caller sở hữu transaction: repository chỉ `flush`, `ingest_quotation` mới `commit`.
+- Ingest nhận diện công trình bằng `project.name` (UNIQUE) + `project.content_hash`: cùng nội dung = `unchanged`, khác nội dung = `DuplicateProjectError`/409, `on_conflict="replace"` xoá cây cũ rồi ghi mới trong một transaction. Đổi cột `project` thì DB cũ cần `docker compose down -v` (không có migration).
+- `run_readonly_sql`: `app/mcp/sql_guard.py` che chuỗi/chú thích trước khi kiểm tra, luôn bọc câu truy vấn trong `SELECT * FROM (...) LIMIT n`; chốt chặn thật vẫn là role chỉ đọc.
 - Định danh bằng tiếng Anh/ASCII; chuỗi nghiệp vụ sơn bằng tiếng Việt; tài liệu viết tiếng Việt.
 - Schema thay đổi: sửa model trong `app/domains/quotation/infrastructure/persistence/models/` và `metadata/*.yaml`
   (tài liệu cột, không đọc lúc chạy). Không dùng Alembic.

@@ -7,7 +7,7 @@ columns:
     semantic_type: identifier
     primary_key: true
   name:
-    description: Tên dự án hoặc công trình.
+    description: Tên dự án hoặc công trình. Duy nhất (ràng buộc UNIQUE ở DB); ingest dùng nó để nhận diện công trình.
     semantic_type: project_name
   address:
     description: Địa chỉ của dự án hoặc công trình.
@@ -16,6 +16,10 @@ columns:
     description: Tên tệp YAML đã được ingest để tạo dự án này (ví dụ
       `cong-trinh-01.yaml`). NULL nghĩa là chưa rõ nguồn.
     semantic_type: source_reference
+  content_hash:
+    description: sha256 (hex, 64 ký tự) của nội dung file YAML đã chuẩn hoá. So sánh để biết gửi lại cùng
+      file hay file đã sửa. NULL với dòng không đến từ ingest.
+    semantic_type: hash
   created_at:
     description: Ngày tạo bản ghi dự án.
     semantic_type: date

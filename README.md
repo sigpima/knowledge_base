@@ -156,7 +156,8 @@ Chi tiết quy ước code: [CLAUDE.md](CLAUDE.md). Kiểm tra stack Docker từ
 - **Chưa có giao diện chat.** Bản này chỉ có MCP server; muốn hỏi đáp thì nối vào Claude/Codex như trên. Dự kiến thêm
   bot terminal hoặc giao diện web đơn giản.
 - **Chưa có bộ nhớ hội thoại.** Mỗi câu hỏi độc lập; lịch sử trong phiên do chính agent bạn dùng giữ.
-- **Ingest từ chối công trình trùng tên** (409) thay vì ghi đè; `scripts/seed.py` xoá sạch rồi nạp lại.
+- **Mỗi tên công trình chỉ có một bản.** Gửi lại file y hệt thì bỏ qua (200 `unchanged`), cùng tên nhưng nội dung khác thì 409, muốn thay thế phải yêu cầu rõ (`?on_conflict=replace` / `--replace`); xem [docs/data-format.md](docs/data-format.md). Không giữ lịch sử phiên bản. `scripts/seed.py` thì xoá sạch rồi nạp lại.
+- **`run_readonly_sql`** chỉ nhận một câu `SELECT`/`WITH`, trả tối đa 200 dòng (trường `truncated` báo có bị cắt không).
 - Quan hệ giá là phép nhân, `(vật tư + nhân công) × (1 + lợi nhuận) ≈ đơn giá`, nên các khoản chênh không cộng thẳng ra
   mức chênh giá cuối; tool và tài liệu đều nói rõ điều này.
 - Dữ liệu không có "hiện trạng công trình", nên không giải thích được chênh giá do yếu tố đó.

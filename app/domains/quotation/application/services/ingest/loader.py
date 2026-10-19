@@ -53,6 +53,8 @@ class _SafeQuotationLoader(yaml.SafeLoader):
 
 def _construct_decimal(loader: yaml.SafeLoader, node: yaml.Node) -> Decimal:
     text = loader.construct_scalar(node).replace("_", "")
+    if ":" in text:
+        raise yaml.constructor.ConstructorError(None, None, _SEXAGESIMAL_MESSAGE.format(text=text), node.start_mark)
     try:
         value = Decimal(text)
     except InvalidOperation:
@@ -62,7 +64,19 @@ def _construct_decimal(loader: yaml.SafeLoader, node: yaml.Node) -> Decimal:
     return value
 
 
+def _construct_int(loader: yaml.SafeLoader, node: yaml.Node) -> int:
+    text = loader.construct_scalar(node)
+    if ":" in text:
+        raise yaml.constructor.ConstructorError(None, None, _SEXAGESIMAL_MESSAGE.format(text=text), node.start_mark)
+    return yaml.SafeLoader.construct_yaml_int(loader, node)
+
+
+_SEXAGESIMAL_MESSAGE = (
+    "{text!r} bị YAML 1.1 đọc là số hệ 60 (giờ:phút = 1*60+30), không phải chuỗi; "
+    "đặt trong dấu nháy nếu là chữ, hoặc viết thành số thường nếu là số"
+)
 _SafeQuotationLoader.add_constructor("tag:yaml.org,2002:float", _construct_decimal)
+_SafeQuotationLoader.add_constructor("tag:yaml.org,2002:int", _construct_int)
 
 
 def _normalize(value: Any) -> Any:

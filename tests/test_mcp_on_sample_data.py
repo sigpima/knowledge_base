@@ -175,3 +175,22 @@ def test_numbers_quoted_in_readme_examples_still_hold(seeded):
     assert Decimal(price["historical_avg"]) == Decimal("222291.19") and float(price["pct_diff_from_avg"]) == 10.1
     assert Decimal(detail["unit_price_b"]) == Decimal("244814.83") and Decimal(detail["price_diff"]) == Decimal("98357.28")
     assert Decimal(labor["pct_of_total"]) == Decimal("54.50") and Decimal(labor["avg_pct_of_total"]) == Decimal("36.64")
+
+
+def test_run_readonly_sql_caps_rows_even_when_the_word_limit_is_in_a_literal(seeded):
+    result = main_mcp.run_readonly_sql("SELECT 'limit' AS word, g FROM generate_series(1, 100000) g")
+
+    assert result["row_count"] == 200 and len(result["rows"]) == 200 and result["truncated"] is True
+
+
+def test_run_readonly_sql_reports_when_nothing_was_cut(seeded):
+    result = main_mcp.run_readonly_sql("SELECT g FROM generate_series(1, 5) g")
+
+    assert (result["row_count"], result["truncated"]) == (5, False)
+
+
+def test_run_readonly_sql_accepts_with_queries_and_commented_queries(seeded):
+    with_query = main_mcp.run_readonly_sql("WITH n AS (SELECT count(*) AS c FROM quotation.project) SELECT c FROM n")
+    commented = main_mcp.run_readonly_sql("-- đếm\nSELECT count(*) AS c FROM quotation.project -- hết")
+
+    assert with_query["rows"] == [{"c": len(seeded)}] and commented["rows"] == [{"c": len(seeded)}]
