@@ -1,0 +1,74 @@
+table:
+  name: quotation.labor_info
+  description: Rollup thông tin nhân công ở cấp hạng mục (dự toán) -- 1-1 với
+    estimation_work_item.
+columns:
+  labor_id:
+    description: Định danh duy nhất của rollup nhân công.
+    semantic_type: identifier
+    primary_key: true
+  cost_item_id:
+    description: Định danh hạng mục chi phí (dự toán) mà rollup nhân công này
+      thuộc về. UNIQUE -- quan hệ 1-1.
+    semantic_type: foreign_key
+    references: quotation.estimation_work_item.cost_item_id
+    unique: true
+  area:
+    description: Diện tích áp dụng của hạng mục (m2) -- nên khớp với
+      quotation.work_item.quantity và main_material.area của cùng hạng mục
+      (basic data sanity, không phải Reconcile bắt buộc ở DB).
+    semantic_type: area
+  kn_manday:
+    description: Tổng manday của thợ chính kiêm nhiệm nội bộ của công ty -- bằng
+      tổng kn_manday của các dòng labor_info_process cùng hạng mục.
+    semantic_type: manday
+  main_out_manday:
+    description: Tổng manday của thợ chính thuê ngoài -- bằng tổng
+      main_out_manday của các dòng labor_info_process cùng hạng mục.
+    semantic_type: manday
+  sub_out_manday:
+    description: Tổng manday của thợ phụ thuê ngoài -- bằng tổng
+      sub_out_manday của các dòng labor_info_process cùng hạng mục. Cả 3 vai
+      trò (kn/main_out/sub_out) cùng làm việc thực tế, KHÔNG phải 3 kịch bản
+      loại trừ nhau.
+    semantic_type: manday
+  kn_total_price:
+    description: Chi phí tương ứng với kn_manday, thuộc kịch bản "có sử dụng
+      kiêm nhiệm" (has_kn).
+    semantic_type: money
+  main_out_total_price:
+    description: Chi phí tương ứng với main_out_manday.
+    semantic_type: money
+  sub_out_total_price:
+    description: Chi phí tương ứng với sub_out_manday.
+    semantic_type: money
+  kn_out_total_price:
+    description: Chi phí phần việc của thợ kiêm nhiệm NẾU đem thuê ngoài thay
+      vì dùng nội bộ -- thuộc kịch bản "thuê ngoài toàn bộ" (all_out), tức
+      kn_out_total_price + main_out_total_price + sub_out_total_price = tổng
+      chi phí kịch bản thuê ngoài toàn bộ.
+    semantic_type: money
+  final_unit_price_type:
+    description: 'Kịch bản nào được dùng để nhân labor_coeff ra
+      labor_unit_price cuối cùng. Giá trị: "has_kn" (có thợ kiêm nhiệm nội
+      bộ) hoặc "all_out" (thuê ngoài toàn bộ).'
+    semantic_type: category
+  labor_coeff:
+    description: Hệ số nhân công, dùng để nhân vào tổng chi phí kịch bản
+      final_unit_price_type nhằm ra labor_unit_price cuối.
+    semantic_type: ratio
+  labor_unit_price:
+    description: Đơn giá nhân công trên mỗi m2, sau khi nhân labor_coeff --
+      cùng nguồn/nghĩa với estimation_work_item.labor_unit_price của cùng
+      hạng mục (giá trị được copy sang đó, không tính lại độc lập).
+    semantic_type: unit_price
+relationships:
+  cost_item:
+    target: quotation.estimation_work_item
+    type: one_to_one
+    description: Rollup nhân công thuộc về một hạng mục chi phí (dự toán).
+  processes:
+    target: quotation.labor_info_process
+    type: one_to_many
+    description: Rollup nhân công có nhiều dòng theo từng quy trình thi công
+      cụ thể.

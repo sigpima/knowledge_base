@@ -1,0 +1,30 @@
+table:
+  name: quotation.warranty_term
+  description: Điều khoản bảo hành của một báo giá.
+columns:
+  warranty_term_id:
+    description: Định danh duy nhất của điều khoản bảo hành.
+    semantic_type: identifier
+    primary_key: true
+  quotation_id:
+    description: Định danh báo giá áp dụng điều khoản bảo hành.
+    semantic_type: foreign_key
+    references: quotation.quotation.quotation_id
+    unique: true
+  period:
+    description: Thời hạn bảo hành.
+    semantic_type: duration
+  period_unit:
+    description: Đơn vị của thời hạn bảo hành, ví dụ tháng hoặc năm.
+    semantic_type: duration_unit
+  extend_percent:
+    description: Tỷ lệ phần trăm dùng để tính phần gia hạn bảo hành.
+    semantic_type: percentage
+  extend_period:
+    description: Khoảng thời gian gia hạn bảo hành.
+    semantic_type: duration
+relationships:
+  quotation:
+    target: quotation.quotation
+    type: one_to_one
+    description: Một báo giá có tối đa một điều khoản bảo hành.

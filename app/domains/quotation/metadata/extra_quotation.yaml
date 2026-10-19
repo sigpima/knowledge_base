@@ -1,0 +1,46 @@
+table:
+  name: quotation.extra_quotation
+  description: Báo giá phát sinh thêm (phát sinh) của một dự án -- độc lập với
+    báo giá chính (quotation), không có FK tới quotation.quotation, chỉ gắn
+    trực tiếp vào project.
+columns:
+  extra_quotation_id:
+    description: Định danh duy nhất của báo giá phát sinh.
+    semantic_type: identifier
+    primary_key: true
+  project_id:
+    description: Định danh dự án mà báo giá phát sinh này thuộc về.
+    semantic_type: foreign_key
+    references: quotation.project.project_id
+  issue_date:
+    description: Ngày phát hành báo giá phát sinh.
+    semantic_type: date
+  total_amount:
+    description: Tổng giá trị báo giá phát sinh.
+    semantic_type: money
+  currency:
+    description: Đơn vị tiền tệ của báo giá phát sinh.
+    semantic_type: currency
+  description:
+    description: Mô tả nội dung của khoản phát sinh.
+    semantic_type: description
+  quantity:
+    description: Khối lượng của khoản phát sinh.
+    semantic_type: quantity
+  unit:
+    description: Đơn vị tính của khối lượng.
+    semantic_type: unit
+  unit_price:
+    description: Đơn giá áp dụng cho một đơn vị khối lượng.
+    semantic_type: unit_price
+  metadata:
+    description: Siêu dữ liệu bổ sung dạng JSON (tên cột Python là extra_metadata
+      vì `metadata` bị SQLAlchemy declarative Base chiếm dụng). NOT NULL, mặc
+      định object rỗng.
+    semantic_type: json
+relationships:
+  project:
+    target: quotation.project
+    type: many_to_one
+    description: Báo giá phát sinh thuộc về một dự án. Quan hệ một chiều --
+      ProjectModel không expose collection ngược lại.

@@ -1,0 +1,51 @@
+table:
+  name: quotation.work_item
+  description: Một hạng mục công việc được báo giá, bao gồm mô tả, khối lượng, đơn
+    giá và thành tiền.
+columns:
+  item_id:
+    description: Định danh duy nhất của hạng mục công việc.
+    semantic_type: identifier
+    primary_key: true
+  package_id:
+    description: Định danh package mà hạng mục công việc thuộc về.
+    semantic_type: foreign_key
+    references: quotation.package.package_id
+  sequence:
+    description: Thứ tự của hạng mục trong package.
+    semantic_type: sequence
+  name:
+    description: Tên hạng mục công việc được báo giá.
+    semantic_type: work_item_name
+  description:
+    description: Mô tả chi tiết nội dung hoặc phạm vi của hạng mục công việc.
+    semantic_type: description
+  quantity:
+    description: Khối lượng cần thực hiện của hạng mục.
+    semantic_type: quantity
+  unit:
+    description: Đơn vị tính của khối lượng.
+    semantic_type: unit
+  unit_price:
+    description: Đơn giá áp dụng cho một đơn vị khối lượng.
+    semantic_type: unit_price
+  total_price:
+    description: Thành tiền của hạng mục, thường được tính từ quantity nhân unit_price.
+    semantic_type: monetary_amount
+  currency:
+    description: Đơn vị tiền tệ của unit_price và total_price.
+    semantic_type: currency
+relationships:
+  quotation_package:
+    target: quotation.package
+    type: many_to_one
+    description: Hạng mục thuộc về một package.
+  work_steps:
+    target: quotation.work_step
+    type: one_to_many
+    description: Hạng mục có thể gồm nhiều bước thi công.
+  concepts:
+    target: quotation.concept
+    type: many_to_many
+    description: Hạng mục có thể được gắn với nhiều concept và một concept có thể
+      áp dụng cho nhiều hạng mục.

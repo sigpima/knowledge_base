@@ -1,0 +1,30 @@
+table:
+  name: quotation.scope_term
+  description: Một điều khoản mô tả phạm vi công việc, điều kiện hoặc giới hạn áp
+    dụng của báo giá.
+columns:
+  scope_term_id:
+    description: Định danh duy nhất của điều khoản phạm vi.
+    semantic_type: identifier
+    primary_key: true
+  quotation_id:
+    description: Định danh báo giá mà điều khoản thuộc về.
+    semantic_type: foreign_key
+    references: quotation.quotation.quotation_id
+  scope_type:
+    description: Loại phạm vi hoặc nhóm phạm vi mà điều khoản đề cập.
+    semantic_type: category
+  term_type:
+    description: Loại điều khoản trong nhóm scope term.
+    semantic_type: category
+  description:
+    description: Nội dung mô tả của điều khoản phạm vi.
+    semantic_type: description
+  amount:
+    description: Giá trị hoặc số lượng liên quan đến điều khoản phạm vi.
+    semantic_type: money
+relationships:
+  quotation:
+    target: quotation.quotation
+    type: many_to_one
+    description: Điều khoản phạm vi thuộc về một báo giá.

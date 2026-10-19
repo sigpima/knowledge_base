@@ -1,0 +1,45 @@
+table:
+  name: quotation.sub_material
+  description: Danh mục vật tư phụ/công cụ dụng cụ/chi phí khác (CCDC, vận
+    hành, quản lý, vận chuyển...), dùng chung cho cả dự án, không gắn riêng
+    một hạng mục. KHÔNG bao gồm "gói khác ngoài sơn" (giàn giáo, xử lý bề mặt
+    đặc biệt...) -- những khoản đó thuộc total_detail loại "chi phí khác".
+columns:
+  sub_id:
+    description: Định danh duy nhất của vật tư phụ.
+    semantic_type: identifier
+    primary_key: true
+  project_id:
+    description: Định danh dự án mà vật tư phụ này thuộc về.
+    semantic_type: foreign_key
+    references: quotation.project.project_id
+  type:
+    description: Loại vật tư phụ (vd "CCDC", "vật tư phụ", "chi phí vận
+      hành", "chi phí quản lý", "chi phí vận chuyển").
+    semantic_type: category
+  name:
+    description: Tên vật tư phụ.
+    semantic_type: name
+  unit:
+    description: Đơn vị tính.
+    semantic_type: unit
+  unit_price:
+    description: Đơn giá trên mỗi đơn vị.
+    semantic_type: unit_price
+  total_price:
+    description: Tổng thành tiền của mục này trên TOÀN BỘ công trình, cộng dồn
+      từ mọi hạng mục dùng nó -- bằng tổng total_price của các dòng item_sub
+      cùng sub_id.
+    semantic_type: money
+relationships:
+  project:
+    target: quotation.project
+    type: many_to_one
+    description: Vật tư phụ thuộc về một dự án. Quan hệ một chiều --
+      ProjectModel không expose collection ngược lại.
+  item_subs:
+    target: quotation.item_sub
+    type: one_to_many
+    description: Vật tư phụ được phân bổ số lượng thực dùng cho từng hạng mục
+      qua bảng trung gian item_sub. Quan hệ một chiều -- SubMaterialModel
+      không expose collection này trong code, chỉ suy ra qua FK ngược.

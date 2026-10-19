@@ -1,0 +1,59 @@
+table:
+  name: quotation.product_to_buy
+  description: Danh sách mua hàng thực tế cho một sản phẩm vật tư chính, làm
+    tròn theo quy cách đóng gói lớn/nhỏ -- dùng chung cho CẢ công trình, KHÔNG
+    tách theo hạng mục (khác main_material, vốn theo từng hạng mục).
+columns:
+  buy_id:
+    description: Định danh duy nhất của dòng mua hàng.
+    semantic_type: identifier
+    primary_key: true
+  project_id:
+    description: Định danh dự án mà dòng mua hàng này thuộc về.
+    semantic_type: foreign_key
+    references: quotation.project.project_id
+  product_name:
+    description: Tên sản phẩm cần mua.
+    semantic_type: product_name
+  package_type:
+    description: Quy cách đóng gói lớn (số lít/thùng lớn).
+    semantic_type: category
+  boxes:
+    description: Số thùng cần trước khi làm tròn (tổng hợp từ nhu cầu các hạng
+      mục dùng sản phẩm này). CHÚ Ý -- tổng boxes cộng dồn theo từng hạng mục ở
+      main_material cho cùng sản phẩm CÓ THỂ KHÔNG khớp con số ở đây -- đây là
+      một bất thường thật của dữ liệu nguồn (2 cách tính khác nhau trong cùng
+      tài liệu), không phải lỗi extract, nên nêu ra khi query thay vì cố làm
+      khớp.
+    semantic_type: quantity
+  boxes_round:
+    description: Số thùng làm tròn (số nguyên) cần mua thực tế.
+    semantic_type: quantity
+  boxes_price:
+    description: Tổng giá theo số thùng đã làm tròn.
+    semantic_type: money
+  boxes_unit_price:
+    description: Đơn giá mỗi thùng -- boxes_price / boxes_round.
+    semantic_type: unit_price
+  mini_package_type:
+    description: Quy cách đóng gói nhỏ/lẻ, dùng khi không đủ một thùng lớn.
+    semantic_type: category
+  mini_boxes_round:
+    description: Số thùng nhỏ/lẻ làm tròn cần mua thêm.
+    semantic_type: quantity
+  mini_boxes_price:
+    description: Tổng giá theo số thùng nhỏ/lẻ.
+    semantic_type: money
+  mini_boxes_unit_price:
+    description: Đơn giá mỗi thùng nhỏ/lẻ -- mini_boxes_price / mini_boxes_round.
+    semantic_type: unit_price
+  total_price_round:
+    description: Tổng chi phí mua đã làm tròn (boxes_price cộng mini_boxes_price
+      nếu có).
+    semantic_type: money
+relationships:
+  project:
+    target: quotation.project
+    type: many_to_one
+    description: Dòng mua hàng thuộc về một dự án. Quan hệ một chiều --
+      ProjectModel không expose collection ngược lại.

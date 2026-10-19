@@ -1,0 +1,33 @@
+table:
+  name: quotation.estimation
+  description: Thông tin dự toán (cost estimation) tổng cho một dự án -- gốc
+    của cây dữ liệu phía dự toán, tách biệt và chỉ liên kết lỏng lẻo với cây
+    báo giá (xem estimation_work_item.item_id). Một project có tối đa một
+    estimation; không phải mọi project đều có (file YAML báo giá có thể không
+    kèm khối `estimation`).
+columns:
+  estimation_id:
+    description: Định danh duy nhất của dự toán.
+    semantic_type: identifier
+    primary_key: true
+  project_id:
+    description: Định danh dự án mà dự toán này thuộc về.
+    semantic_type: foreign_key
+    references: quotation.project.project_id
+  total_price:
+    description: Tổng chi phí dự toán (vật tư chính + vật tư phụ + nhân công +
+      chi phí khác + bảo hành, v.v.) -- có thể tự suy luận bằng tổng các dòng
+      total_detail nếu tài liệu nguồn không nêu rõ. Là con số dự toán/chi phí
+      vốn, KHÁC với quotation.total_amount (tổng báo giá bán cho khách) --
+      hai con số này không nhất thiết khớp nhau.
+    semantic_type: money
+relationships:
+  total_details:
+    target: quotation.total_detail
+    type: one_to_many
+    description: Dự toán có nhiều dòng chi phí/lợi nhuận theo loại (rollup).
+  estimation_work_items:
+    target: quotation.estimation_work_item
+    type: one_to_many
+    description: Dự toán có nhiều hạng mục chi phí (một dòng mỗi hạng mục thi
+      công phía dự toán).

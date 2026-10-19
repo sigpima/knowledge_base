@@ -1,0 +1,50 @@
+table:
+  name: quotation.quotation
+  description: Báo giá nghiệp vụ. Không còn khái niệm phiên bản (version) riêng --
+    ngày phát hành, tổng tiền, tiền tệ nằm trực tiếp trên bảng này.
+columns:
+  quotation_id:
+    description: Định danh duy nhất của báo giá.
+    semantic_type: identifier
+    primary_key: true
+  quotation_code:
+    description: Mã nghiệp vụ dùng để nhận diện báo giá.
+    semantic_type: business_identifier
+  project_id:
+    description: Định danh dự án mà báo giá thuộc về.
+    semantic_type: foreign_key
+    references: quotation.project.project_id
+  issue_date:
+    description: Ngày phát hành báo giá.
+    semantic_type: date
+  total_amount:
+    description: Tổng giá trị báo giá.
+    semantic_type: money
+  currency:
+    description: Đơn vị tiền tệ của báo giá.
+    semantic_type: currency
+  metadata:
+    description: Siêu dữ liệu bổ sung dạng JSON (tên cột Python là extra_metadata
+      vì `metadata` bị SQLAlchemy declarative Base chiếm dụng).
+    semantic_type: json
+relationships:
+  project:
+    target: quotation.project
+    type: many_to_one
+    description: Báo giá thuộc về một dự án.
+  packages:
+    target: quotation.package
+    type: one_to_many
+    description: Một báo giá có nhiều gói/hạng mục lớn (package).
+  scope_terms:
+    target: quotation.scope_term
+    type: one_to_many
+    description: Một báo giá có thể có nhiều điều khoản phạm vi.
+  payment_terms:
+    target: quotation.payment_term
+    type: one_to_many
+    description: Một báo giá có thể có nhiều điều khoản thanh toán.
+  warranty_term:
+    target: quotation.warranty_term
+    type: one_to_one
+    description: Một báo giá có tối đa một điều khoản bảo hành.

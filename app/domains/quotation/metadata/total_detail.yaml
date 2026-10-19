@@ -1,0 +1,34 @@
+table:
+  name: quotation.total_detail
+  description: Chi phí/lợi nhuận của từng loại trong dự toán, rollup ở một chỗ
+    riêng (không phải khối chi tiết theo hạng mục). Một dòng cho mỗi loại có
+    xuất hiện trong tài liệu nguồn -- thiếu một loại là bình thường, không
+    phải lỗi.
+columns:
+  total_detail_id:
+    description: Định danh duy nhất của dòng chi phí/lợi nhuận.
+    semantic_type: identifier
+    primary_key: true
+  estimation_id:
+    description: Định danh dự toán mà dòng chi phí này thuộc về.
+    semantic_type: foreign_key
+    references: quotation.estimation.estimation_id
+  type:
+    description: |
+      Loại chi phí/lợi nhuận. Không phải enum ràng buộc ở DB -- chuỗi tự do,
+      thường là một trong: "vật tư chính", "vật tư phụ", "nhân công",
+      "chi phí khác" (giàn giáo, xử lý bề mặt đặc biệt nằm ngoài các gói
+      chính -- không có sub_material riêng cho các khoản này), "chi phí bảo
+      hành", "lợi nhuận thuần", "Incentive", "lợi nhuận cuối".
+    semantic_type: category
+  name:
+    description: Tên hiển thị của dòng chi phí (thường trùng hoặc gần với type).
+    semantic_type: name
+  price:
+    description: Giá trị VNĐ của dòng chi phí/lợi nhuận này.
+    semantic_type: money
+relationships:
+  estimation:
+    target: quotation.estimation
+    type: many_to_one
+    description: Dòng chi phí thuộc về một dự toán.

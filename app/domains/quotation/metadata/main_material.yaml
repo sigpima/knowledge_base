@@ -1,0 +1,80 @@
+table:
+  name: quotation.main_material
+  description: Một dòng vật tư chính (sơn, chống thấm, keo...) dùng trong một
+    hạng mục, phía dự toán. Nhiều dòng có thể thuộc cùng một hạng mục chi phí
+    (estimation_work_item).
+columns:
+  main_material_id:
+    description: Định danh duy nhất của dòng vật tư chính.
+    semantic_type: identifier
+    primary_key: true
+  cost_item_id:
+    description: Định danh hạng mục chi phí (dự toán) mà dòng vật tư này
+      thuộc về.
+    semantic_type: foreign_key
+    references: quotation.estimation_work_item.cost_item_id
+  product_segment:
+    description: Phân khúc sản phẩm, thường là "CAO CẤP" hoặc "TRUNG CẤP".
+    semantic_type: category
+  product_line:
+    description: Hệ sản phẩm (vd "Chống thấm sàn", "Mastic").
+    semantic_type: category
+  product_name:
+    description: Tên sản phẩm cụ thể.
+    semantic_type: product_name
+  layers:
+    description: Số lớp thi công của vật tư này.
+    semantic_type: count
+  package_type:
+    description: Quy cách đóng gói (vd "18L/thùng").
+    semantic_type: category
+  theoretical_rate:
+    description: Định mức lý thuyết tối đa (m2/Lít/lớp).
+    semantic_type: rate
+  construction_loss:
+    description: Hao hụt thi công, dạng tỷ lệ (vd 0.1 = 10%).
+    semantic_type: ratio
+  actual_rate_per_litter:
+    description: Định mức thực tế, m2/Lít (đã trừ hao hụt).
+    semantic_type: rate
+  actual_rate_per_box:
+    description: Định mức thực tế, m2/thùng.
+    semantic_type: rate
+  box_price:
+    description: Giá VNĐ trên mỗi thùng.
+    semantic_type: money
+  color_mixing_price:
+    description: Chi phí pha màu (VNĐ), thường tính trên mỗi thùng.
+    semantic_type: money
+  unit_price_per_m2:
+    description: Đơn giá sản phẩm trên mỗi m2 -- box_price / actual_rate_per_box.
+    semantic_type: unit_price
+  percent_usage:
+    description: Phần trăm sử dụng của sản phẩm này trong hạng mục, dạng tỷ lệ.
+    semantic_type: ratio
+  area:
+    description: Diện tích áp dụng -- nên khớp với work_item.quantity và
+      labor_info.area của cùng hạng mục.
+    semantic_type: area
+  total_price_area_based:
+    description: Tổng chi phí theo diện tích, tính từ boxes (chưa làm tròn)
+      x box_price.
+    semantic_type: money
+  litters:
+    description: Số lít sử dụng -- (area x percent_usage) / actual_rate_per_litter.
+    semantic_type: quantity
+  boxes:
+    description: Số thùng theo tính toán, CHƯA làm tròn -- (area x
+      percent_usage) / actual_rate_per_box. KHÔNG lấy từ product_to_buy.boxes_round
+      (đó là số làm tròn gộp cả công trình, dùng riêng cho từng hạng mục sẽ
+      sai).
+    semantic_type: quantity
+  total_price_round:
+    description: Tổng chi phí theo số thùng đã làm tròn -- round(boxes) x
+      box_price.
+    semantic_type: money
+relationships:
+  cost_item:
+    target: quotation.estimation_work_item
+    type: many_to_one
+    description: Dòng vật tư chính thuộc về một hạng mục chi phí (dự toán).

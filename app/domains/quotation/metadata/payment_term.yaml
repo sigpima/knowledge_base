@@ -1,0 +1,30 @@
+table:
+  name: quotation.payment_term
+  description: Một điều khoản thanh toán của báo giá, xác định tỷ lệ thanh
+    toán và điều kiện kích hoạt.
+columns:
+  payment_term_id:
+    description: Định danh duy nhất của điều khoản thanh toán.
+    semantic_type: identifier
+    primary_key: true
+  quotation_id:
+    description: Định danh báo giá mà điều khoản thanh toán thuộc về.
+    semantic_type: foreign_key
+    references: quotation.quotation.quotation_id
+  sequence:
+    description: Thứ tự của điều khoản thanh toán trong danh sách điều khoản.
+    semantic_type: sequence
+  percentage:
+    description: Tỷ lệ phần trăm giá trị báo giá được thanh toán tại điều khoản này.
+    semantic_type: percentage
+  trigger_type:
+    description: Loại sự kiện hoặc điều kiện kích hoạt việc thanh toán.
+    semantic_type: category
+  trigger_description:
+    description: Mô tả chi tiết điều kiện kích hoạt thanh toán.
+    semantic_type: description
+relationships:
+  quotation:
+    target: quotation.quotation
+    type: many_to_one
+    description: Điều khoản thanh toán thuộc về một báo giá.

@@ -1,0 +1,30 @@
+table:
+  name: quotation.package
+  description: Nhóm các hạng mục công việc trong một phiên bản báo giá.
+columns:
+  package_id:
+    description: Định danh duy nhất của package.
+    semantic_type: identifier
+    primary_key: true
+  quotation_id:
+    description: Định danh báo giá mà package thuộc về.
+    semantic_type: foreign_key
+    references: quotation.quotation.quotation_id
+  sequence:
+    description: Thứ tự hiển thị hoặc sắp xếp của package trong phiên bản báo giá.
+    semantic_type: sequence
+  name:
+    description: Tên của package hoặc nhóm hạng mục.
+    semantic_type: name
+  total_amount:
+    description: Tổng giá trị tiền của toàn bộ work item trong package.
+    semantic_type: monetary_amount
+relationships:
+  quotation:
+    target: quotation.quotation
+    type: many_to_one
+    description: Package thuộc về một báo giá.
+  work_items:
+    target: quotation.work_item
+    type: one_to_many
+    description: Package chứa nhiều hạng mục công việc.

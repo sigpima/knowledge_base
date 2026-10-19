@@ -1,0 +1,34 @@
+table:
+  name: quotation.work_step
+  description: Một bước thi công thuộc một hạng mục công việc.
+columns:
+  step_id:
+    description: Định danh duy nhất của bước thi công.
+    semantic_type: identifier
+    primary_key: true
+  item_id:
+    description: Định danh hạng mục công việc mà bước thi công thuộc về.
+    semantic_type: foreign_key
+    references: quotation.work_item.item_id
+  sequence:
+    description: Thứ tự thực hiện của bước trong hạng mục.
+    semantic_type: sequence
+  layers:
+    description: Số lớp thi công được chỉ định cho bước này.
+    semantic_type: count
+  description:
+    description: Mô tả nội dung của bước thi công (đóng vai trò là tên/tiêu đề của
+      bước, vì bảng này không có cột name riêng).
+    semantic_type: description
+  note:
+    description: Ghi chú bổ sung cho bước thi công.
+    semantic_type: note
+  product_name:
+    description: Tên sản phẩm được khuyến nghị sử dụng cho bước thi công này (chuỗi
+      tự do, không phải khóa ngoại -- không còn bảng product riêng).
+    semantic_type: product_name
+relationships:
+  work_item:
+    target: quotation.work_item
+    type: many_to_one
+    description: Bước thi công thuộc về một hạng mục công việc.

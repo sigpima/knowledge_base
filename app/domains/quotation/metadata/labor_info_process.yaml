@@ -1,0 +1,45 @@
+table:
+  name: quotation.labor_info_process
+  description: Thông tin nhân công theo từng quy trình thi công cụ thể thuộc
+    một hạng mục (vd "Chống thấm 2 lớp", "Sơn lót", "Bả matit lớp 1").
+columns:
+  process_id:
+    description: Định danh duy nhất của dòng quy trình.
+    semantic_type: identifier
+    primary_key: true
+  labor_id:
+    description: Định danh rollup nhân công (labor_info) mà quy trình này
+      thuộc về.
+    semantic_type: foreign_key
+    references: quotation.labor_info.labor_id
+  name:
+    description: Tên quy trình thi công (vd "Vệ sinh bề mặt", "Bả matit lớp
+      1", "Sơn phủ lớp 2").
+    semantic_type: name
+  main_labors_kn:
+    description: Số thợ chính kiêm nhiệm nội bộ tham gia quy trình này.
+    semantic_type: headcount
+  main_labors_out:
+    description: Số thợ chính thuê ngoài tham gia quy trình này.
+    semantic_type: headcount
+  sub_labors_out:
+    description: Số thợ phụ thuê ngoài tham gia quy trình này.
+    semantic_type: headcount
+  days:
+    description: Số ngày thực hiện quy trình này.
+    semantic_type: duration
+  kn_manday:
+    description: Manday của thợ chính kiêm nhiệm cho quy trình này -- tự suy ra
+      = main_labors_kn x days, tài liệu nguồn không nêu trực tiếp.
+    semantic_type: manday
+  main_out_manday:
+    description: Manday của thợ chính thuê ngoài -- = main_labors_out x days.
+    semantic_type: manday
+  sub_out_manday:
+    description: Manday của thợ phụ thuê ngoài -- = sub_labors_out x days.
+    semantic_type: manday
+relationships:
+  labor_info:
+    target: quotation.labor_info
+    type: many_to_one
+    description: Dòng quy trình thuộc về một rollup nhân công cấp hạng mục.

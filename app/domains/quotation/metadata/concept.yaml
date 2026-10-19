@@ -1,0 +1,40 @@
+table:
+  name: quotation.concept
+  description: Khái niệm dùng để phân loại hoặc gắn ngữ nghĩa cho các hạng mục công việc.
+columns:
+  concept_id:
+    description: Định danh duy nhất của concept.
+    semantic_type: identifier
+    primary_key: true
+  type:
+    description: |
+      Loại concept -- khai báo trong file YAML báo giá cho từng hạng mục
+      (work_item), lấy từ danh sách giá trị cho phép. Các giá trị type và name tương ứng:
+        - stage: "Xử lý trước khi sơn" | "Sơn hoàn thiện"
+        - category: "Xử lý thấm, nứt - phẳng bề mặt" | "Phào chỉ" |
+          "Cạo sủi tường/sàn" | "Chống thấm" | "Sơn trang trí" |
+          "Sơn hiệu ứng" | "Sơn đá ARTSTONE" | "Sơn công nghiệp"
+        - application: "Nội thất" | "Ngoại thất"
+        - effect: "Gai" | "Bê tông"
+        - object: field mở (vd "Sàn", "Tường", "Trần", "Mái", "Sân thượng",
+          "Cột", "Cửa"), không phải enum cố định.
+      1 work_item có thể có nhiều concept cùng type (vd nhiều object), trừ
+      stage/category thường chỉ có tối đa 1 giá trị mỗi work_item.
+    semantic_type: category
+  name:
+    description: Tên/giá trị của concept, xem danh sách theo từng type ở cột
+      type.
+    semantic_type: name
+relationships:
+  work_items:
+    target: quotation.work_item
+    type: many_to_many
+    description: Concept có thể được gắn với nhiều hạng mục công việc.
+association_tables:
+  quotation.work_item_concept:
+    description: Bảng liên kết many-to-many giữa hạng mục công việc (work_item) và concept.
+    columns:
+      concept_id:
+        references: quotation.concept.concept_id
+      item_id:
+        references: quotation.work_item.item_id

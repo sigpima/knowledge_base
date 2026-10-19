@@ -1,0 +1,30 @@
+table:
+  name: quotation.project
+  description: Dự án/công trình mà một hoặc nhiều báo giá được lập cho.
+columns:
+  project_id:
+    description: Định danh duy nhất của dự án.
+    semantic_type: identifier
+    primary_key: true
+  name:
+    description: Tên dự án hoặc công trình.
+    semantic_type: project_name
+  address:
+    description: Địa chỉ của dự án hoặc công trình.
+    semantic_type: address
+  source_file:
+    description: Tên tệp YAML đã được ingest để tạo dự án này (ví dụ
+      `cong-trinh-01.yaml`). NULL nghĩa là chưa rõ nguồn.
+    semantic_type: source_reference
+  created_at:
+    description: Ngày tạo bản ghi dự án.
+    semantic_type: date
+  estimated_workdays:
+    description: Số ngày dự kiến hoàn thành cho từng giai đoạn, dạng mảng số nguyên
+      (ví dụ [30, 6] = giai đoạn 1 mất 30 ngày, giai đoạn 2 mất 6 ngày).
+    semantic_type: array
+relationships:
+  quotations:
+    target: quotation.quotation
+    type: one_to_many
+    description: Một dự án có thể có nhiều báo giá.

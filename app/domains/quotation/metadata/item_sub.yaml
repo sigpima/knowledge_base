@@ -1,0 +1,41 @@
+table:
+  name: quotation.item_sub
+  description: Bảng trung gian N-N giữa work_item (báo giá) và sub_material,
+    gắn số lượng vật tư phụ dùng RIÊNG cho từng hạng mục. Dùng khóa chính đại
+    diện (item_sub_id) thay vì khóa kép (item_id, sub_id) vì item_id được
+    phép NULL khi một dòng vật tư phụ không map được vào hạng mục cụ thể nào
+    -- một khóa kép không cho phép thành viên NULL.
+columns:
+  item_sub_id:
+    description: Định danh duy nhất (khóa chính đại diện) của dòng gán vật tư
+      phụ.
+    semantic_type: identifier
+    primary_key: true
+  item_id:
+    description: Định danh hạng mục báo giá (work_item) dùng vật tư phụ này.
+      NULLABLE khi không map được vào hạng mục cụ thể.
+    semantic_type: foreign_key
+    references: quotation.work_item.item_id
+  sub_id:
+    description: Định danh vật tư phụ (sub_material) được dùng.
+    semantic_type: foreign_key
+    references: quotation.sub_material.sub_id
+  amount:
+    description: Số lượng thực dùng RIÊNG cho hạng mục này -- không phải số
+      dùng chung nhân bản.
+    semantic_type: quantity
+  total_price:
+    description: Thành tiền của dòng này -- amount x sub_material.unit_price.
+      Tổng total_price của mọi item_sub cùng một sub_id cộng lại khớp
+      sub_material.total_price của vật tư đó.
+    semantic_type: money
+relationships:
+  work_item:
+    target: quotation.work_item
+    type: many_to_one
+    description: Dòng gán vật tư phụ, nếu map được, thuộc về một hạng mục báo
+      giá (nullable).
+  sub_material:
+    target: quotation.sub_material
+    type: many_to_one
+    description: Dòng gán vật tư phụ tham chiếu tới một vật tư phụ cụ thể.

@@ -1,0 +1,79 @@
+table:
+  name: quotation.estimation_work_item
+  description: Rollup chi phí vốn/giá bán của một hạng mục thi công, phía dự
+    toán -- góc nhìn chi phí, khác quotation.work_item (góc nhìn báo giá cho
+    khách). Liên kết LỎNG LẺO (nullable) tới work_item qua item_id -- không
+    phải mọi hạng mục dự toán đều map được 1-1 sang một work_item báo giá,
+    đây là thiết kế có chủ đích (hai cây dữ liệu tách biệt).
+columns:
+  cost_item_id:
+    description: Định danh duy nhất của hạng mục chi phí (dự toán).
+    semantic_type: identifier
+    primary_key: true
+  estimation_id:
+    description: Định danh dự toán mà hạng mục chi phí này thuộc về.
+    semantic_type: foreign_key
+    references: quotation.estimation.estimation_id
+  item_id:
+    description: Định danh hạng mục phía báo giá (work_item) tương ứng, nếu
+      map được. NULLABLE -- liên kết lỏng theo thiết kế, không phải mọi hạng
+      mục dự toán đều có work_item báo giá tương ứng.
+    semantic_type: foreign_key
+    references: quotation.work_item.item_id
+  name:
+    description: Tên hạng mục (thường trùng với work_item.name khi map được).
+    semantic_type: name
+  main_unit_price:
+    description: Đơn giá vật tư chính trên mỗi m2 (giá sàn hệ sản phẩm).
+    semantic_type: unit_price
+  sub_unit_price:
+    description: Đơn giá vật tư phụ trên mỗi m2, phân bổ theo hệ sơn.
+    semantic_type: unit_price
+  material_unit_price:
+    description: Đơn giá vật tư đã làm tròn trên mỗi m2, gồm cả chính + phụ.
+      Xấp xỉ main_unit_price + sub_unit_price (chênh nhỏ do làm tròn).
+    semantic_type: unit_price
+  total_price_area_based:
+    description: Tổng chi phí vật tư của hạng mục tính theo diện tích (chưa
+      làm tròn số thùng) -- bằng tổng total_price_area_based của các dòng
+      main_material cùng hạng mục.
+    semantic_type: money
+  total_price_round:
+    description: Tổng chi phí vật tư của hạng mục sau khi làm tròn số thùng --
+      bằng tổng total_price_round của các dòng main_material cùng hạng mục.
+    semantic_type: money
+  material_unit_price_with_color_mixing_cost:
+    description: material_unit_price cộng thêm chi phí pha màu phân bổ trên
+      mỗi m2.
+    semantic_type: unit_price
+  labor_unit_price:
+    description: Đơn giá nhân công trên mỗi m2, ĐÃ nhân hệ số (labor_coeff) --
+      cùng nguồn/nghĩa với labor_info.labor_unit_price của cùng hạng mục,
+      KHÔNG phải đơn giá trước hệ số. Copy nguyên giá trị từ labor_info, không
+      tính lại độc lập.
+    semantic_type: unit_price
+  profit_margin:
+    description: Biên lợi nhuận, dạng tỷ lệ (vd 0.2 = 20%), KHÔNG phải số tiền
+      VNĐ. Quan hệ giá -- (material_unit_price + labor_unit_price) *
+      (1 + profit_margin) xấp xỉ quotation.work_item.unit_price phía báo giá
+      tương ứng (khi item_id map được) -- quan hệ này là NHÂN, không phải
+      CỘNG.
+    semantic_type: ratio
+relationships:
+  estimation:
+    target: quotation.estimation
+    type: many_to_one
+    description: Hạng mục chi phí thuộc về một dự toán.
+  work_item:
+    target: quotation.work_item
+    type: many_to_one
+    description: Hạng mục chi phí (dự toán) tương ứng lỏng lẻo với một hạng
+      mục báo giá, nếu map được (nullable).
+  labor_info:
+    target: quotation.labor_info
+    type: one_to_one
+    description: Hạng mục chi phí có tối đa một rollup thông tin nhân công.
+  main_materials:
+    target: quotation.main_material
+    type: one_to_many
+    description: Hạng mục chi phí có nhiều dòng vật tư chính.
