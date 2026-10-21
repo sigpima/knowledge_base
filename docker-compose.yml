@@ -64,6 +64,13 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}  # khoá Gemini lấy từ môi trường máy chủ/.env, không có giá trị mặc định
       MCP_SERVER_URL: http://mcp:8002/mcp
       CHAT_API_HOST: 0.0.0.0  # trong container; cổng host vẫn chỉ mở trên 127.0.0.1 (xem ports)
+      # Compose chỉ dùng môi trường máy chủ/.env để thay thế ${...} trong file này, không tự chuyển vào container;
+      # biến nào người vận hành cần đổi (kể cả công tắc tắt) phải được liệt kê ở đây. Mặc định khớp app/infrastructure/config/config.py.
+      CHAT_DEMO_ENABLED: ${CHAT_DEMO_ENABLED:-true}
+      CHAT_MAX_QUESTION_CHARS: ${CHAT_MAX_QUESTION_CHARS:-500}
+      CHAT_MAX_TURNS_PER_SESSION: ${CHAT_MAX_TURNS_PER_SESSION:-30}
+      CHAT_SESSION_TTL_SECONDS: ${CHAT_SESSION_TTL_SECONDS:-1800}
+      CHAT_MAX_SESSIONS: ${CHAT_MAX_SESSIONS:-200}
     command: python main_chat.py
     ports:
       - "127.0.0.1:8003:8003"

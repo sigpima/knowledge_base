@@ -124,6 +124,11 @@ curl -N -X POST localhost:8003/chat/stream -H 'content-type: application/json' \
   -d '{"message":"Báo giá mới nhất giá bao nhiêu?"}'
 ```
 
+**Công tắc tắt khẩn cấp:** `CHAT_DEMO_ENABLED=false docker compose --profile chat up -d` tạo lại container `chat` với cờ tắt
+(`/chat/status` báo `enabled: false`, `/chat/stream` trả 503, không gọi Gemini nữa); bật lại bằng `docker compose --profile chat up -d` không kèm biến (hoặc đặt `CHAT_DEMO_ENABLED=true`).
+Các biến `CHAT_*` trong bảng dưới đều được compose chuyển vào container theo cách này (đặt trong môi trường máy chủ hoặc file `.env` cạnh `docker-compose.yml`).
+Tắt cứng hẳn tiến trình: `docker compose --profile chat stop chat`.
+
 Dừng cả service chat: `docker compose --profile chat down` (thêm `-v` để xoá dữ liệu); `docker compose down` không kèm profile sẽ để lại container `chat`.
 
 **`POST /chat/stream`**, body JSON `{"message": "...", "session_id": null}`, trả `text/event-stream`. Bỏ trống `session_id` ở lượt đầu;

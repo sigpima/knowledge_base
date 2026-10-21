@@ -91,3 +91,14 @@ def test_readme_has_a_disclaimer_that_brands_and_data_are_invented():
 def test_readme_documents_the_terminal_chat():
     for phrase in ("python -m app.chat", "GEMINI_API_KEY", "requirements-chat.txt", "chat_logs", "/clear"):
         assert phrase in README, phrase
+
+
+def test_compose_chat_service_passes_through_every_documented_chat_switch():
+    """Compose không tự chuyển biến môi trường máy chủ vào container: mỗi biến CHAT_* người vận hành đổi được (README) phải nằm trong `environment` của `chat`."""
+    compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    chat_block = compose.split("\n  chat:\n", 1)[1]
+    documented = set(re.findall(r"^\| `(CHAT_[A-Z_]+)`", README, flags=re.MULTILINE))
+    operator_switches = documented - {"CHAT_API_HOST", "CHAT_API_PORT"}  # hai biến này cố định trong compose (host/cổng)
+
+    assert {"CHAT_DEMO_ENABLED", "CHAT_MAX_QUESTION_CHARS", "CHAT_MAX_TURNS_PER_SESSION"} <= operator_switches
+    assert [name for name in sorted(operator_switches) if f"{name}: ${{{name}:-" not in chat_block] == []
