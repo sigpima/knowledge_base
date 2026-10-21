@@ -4,7 +4,6 @@ Lịch sử của phiên hiện tại nằm trong đối tượng chat của Gem
 """
 import asyncio
 import contextvars
-import itertools
 import json
 import time
 from contextlib import asynccontextmanager
@@ -14,6 +13,7 @@ from typing import Any, AsyncIterator
 from google import genai
 from google.genai import types
 from mcp import ClientSession
+from mcp import types as types_mcp
 from mcp.client.streamable_http import streamable_http_client
 
 from app.chat.events import PREVIEW_MAX_CHARS, SQL_TOOL, ChatEvent, summarize_tool_result
@@ -57,12 +57,23 @@ class _LiveClientSession(ClientSession):
         return self
 
 
-class _EventQueue(asyncio.Queue):
-    """Hàng đợi sự kiện của một lượt hỏi; `call_id` đếm từ 1 trong lượt đó."""
+TOOL_LIMIT_MESSAGE = "tool-call limit reached"
 
-    def __init__(self):
+
+class _EventQueue(asyncio.Queue):
+    """Hàng đợi sự kiện của một lượt hỏi; `call_id` đếm từ 1 trong lượt đó, tối đa `max_calls` lần gọi tool."""
+
+    def __init__(self, max_calls: int):
         super().__init__()
-        self.call_ids = itertools.count(1)
+        self.max_calls = max_calls
+        self.calls = 0
+
+    def next_call_id(self) -> int | None:
+        """`call_id` của lần gọi tiếp theo, hoặc None nếu lượt hỏi đã dùng hết số lần gọi tool."""
+        if self.calls >= self.max_calls:
+            return None
+        self.calls += 1
+        return self.calls
 
 
 # Mỗi lượt `ask_stream` đặt hàng đợi riêng; task Gemini sao chép ngữ cảnh lúc tạo nên chỉ thấy hàng đợi của lượt mình.
@@ -89,7 +100,13 @@ class ObservedClientSession(_LiveClientSession):
         queue = _event_queue.get()
         if queue is None:
             return await super().call_tool(name, arguments, *args, **kwargs)
-        call_id = next(queue.call_ids)
+        # `maximum_remote_calls` của SDK đếm số lần hỏi mô hình, không đếm số tool: một phản hồi có thể chứa nhiều
+        # function_call song song và SDK chạy hết. Giới hạn số tool mỗi lượt được giữ ở đây.
+        call_id = queue.next_call_id()
+        if call_id is None:
+            return types_mcp.CallToolResult(
+                is_error=True, content=[types_mcp.TextContent(type="text", text=TOOL_LIMIT_MESSAGE)]
+            )
         tool_args = _primitive(arguments or {})
         queue.put_nowait(ChatEvent("tool_call", {"call_id": call_id, "tool": name, "args": tool_args}))
         started = time.perf_counter()
@@ -176,7 +193,7 @@ class ChatService:
         """
         started = time.perf_counter()
         chat = self._get_chat()
-        queue = _EventQueue()
+        queue = _EventQueue(self.max_remote_calls)
         token = _event_queue.set(queue)
         try:
             task = asyncio.create_task(chat.send_message(question))

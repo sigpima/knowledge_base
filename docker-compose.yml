@@ -57,7 +57,9 @@ services:
     <<: *app
     profiles: ["chat"]  # không chạy với `docker compose up` thường; bật bằng `--profile chat` hoặc COMPOSE_PROFILES=chat
     depends_on:
-      - mcp
+      mcp:
+        condition: service_started
+        restart: true  # phiên MCP của chat là có trạng thái: mcp khởi động lại (qua compose) thì chat khởi động lại theo
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}  # khoá Gemini lấy từ môi trường máy chủ/.env, không có giá trị mặc định
       MCP_SERVER_URL: http://mcp:8002/mcp

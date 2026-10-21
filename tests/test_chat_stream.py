@@ -222,3 +222,74 @@ def test_non_json_args_are_turned_into_primitives():
 
     assert isinstance(events[0].data["args"]["when"], str)
     events[0].to_sse()
+
+
+class ParallelToolChat(ToolCallingChat):
+    """Một phản hồi mô hình mang nhiều function_call song song; SDK chạy tất cả cùng lúc."""
+
+    def __init__(self, session, calls):
+        super().__init__(session, [])
+        self.calls = calls
+        self.results = []
+
+    async def send_message(self, question):
+        self.results = await asyncio.gather(
+            *[self.session.call_tool(name=name, arguments=args) for name, args in self.calls]
+        )
+        return FakeResponse("xong")
+
+
+def _parallel_service(calls, max_remote_calls=5):
+    session = FakeMcpSession(delay=0.01)
+    called = []
+    original = session._fake_call_tool
+
+    async def counting(name, arguments=None):
+        called.append(name)
+        return await original(name, arguments)
+
+    session._fake_call_tool = counting
+    client = FakeClient(session, [])
+    chat = ParallelToolChat(session, calls)
+    client.create = lambda model, config: chat
+    return ChatService(session, client, "mô-hình-thử", max_remote_calls=max_remote_calls), chat, called
+
+
+def test_tool_calls_beyond_the_per_question_limit_are_refused():
+    calls = [(f"t{i}", {"i": i}) for i in range(1, 9)]
+    service, chat, called = _parallel_service(calls)
+
+    events = asyncio.run(_collect(service, "q"))
+
+    tool_calls = [e for e in events if e.type == "tool_call"]
+    tool_results = [e for e in events if e.type == "tool_result"]
+    assert [e.data["call_id"] for e in tool_calls] == [1, 2, 3, 4, 5]
+    assert sorted(e.data["call_id"] for e in tool_results) == [1, 2, 3, 4, 5]
+    assert len(called) == 5  # MCP server chỉ bị gọi 5 lần
+    refused = [r for r in chat.results if r.is_error]
+    assert len(refused) == 3
+    assert all(r.content[0].text == "tool-call limit reached" for r in refused)
+    assert _types(events)[-2:] == ["answer", "done"]
+
+
+def test_tool_calls_within_the_limit_are_unchanged():
+    calls = [(f"t{i}", {}) for i in range(1, 6)]
+    service, chat, called = _parallel_service(calls)
+
+    events = asyncio.run(_collect(service, "q"))
+
+    assert len(called) == 5
+    assert not any(r.is_error for r in chat.results)
+    assert sorted(e.data["call_id"] for e in events if e.type == "tool_result") == [1, 2, 3, 4, 5]
+
+
+def test_tool_call_limit_follows_max_remote_calls_and_resets_per_question():
+    calls = [(f"t{i}", {}) for i in range(1, 5)]
+    service, chat, called = _parallel_service(calls, max_remote_calls=2)
+
+    first = asyncio.run(_collect(service, "q1"))
+    second = asyncio.run(_collect(service, "q2"))
+
+    assert [e.data["call_id"] for e in first if e.type == "tool_call"] == [1, 2]
+    assert [e.data["call_id"] for e in second if e.type == "tool_call"] == [1, 2]
+    assert len(called) == 4

@@ -138,16 +138,19 @@ lấy `session_id` trong sự kiện `start` và gửi lại ở các lượt sa
 | `done` | `{"duration_ms"}` |
 | `error` | `{"code": "model" \| "session_full" \| "internal", "message"}`; sau `error` luồng đóng và **không** có `done` |
 
-Một lượt bình thường đi theo thứ tự `start`, các cặp `tool_call`/`tool_result`, `answer`, `done`. Lỗi kiểm tra đầu vào trả JSON thường
-trước khi tạo phiên hay gọi Gemini: `503 {"code": "demo_disabled"}` (đã tắt), `422 {"code": "invalid_question"}` (rỗng hoặc sai dạng),
+Một lượt bình thường đi theo thứ tự `start`, tối đa 5 cặp `tool_call`/`tool_result`, `answer`, `done` (lần gọi tool thứ 6 trở đi trong cùng một câu hỏi
+bị từ chối, không chạm tới MCP server và không phát sự kiện). Lỗi kiểm tra đầu vào trả JSON thường trước khi tạo phiên hay gọi Gemini, theo thứ tự:
+`503 {"code": "demo_disabled"}` (đã tắt), `415 {"code": "unsupported_media_type"}` (thiếu `Content-Type: application/json`),
+`413 {"code": "too_long"}` (body quá 16 KB, bị chặn trước khi đọc hết), `422 {"code": "invalid_question"}` (rỗng hoặc sai dạng),
 `422 {"code": "too_long"}` (quá `CHAT_MAX_QUESTION_CHARS` ký tự, mặc định 500). **`GET /chat/status`** trả `{"enabled": true|false}` để web ẩn/hiện hộp chat.
+Service không phơi `/docs`, `/redoc`, `/openapi.json`.
 
 | Biến môi trường | Mặc định | Ý nghĩa |
 | --- | --- | --- |
 | `GEMINI_API_KEY` | (bắt buộc) | khoá Gemini; thiếu thì `main_chat.py` không chạy |
 | `MCP_SERVER_URL` | `http://127.0.0.1:8002/mcp` | MCP server để gọi tool (trong compose: `http://mcp:8002/mcp`) |
 | `CHAT_API_HOST` / `CHAT_API_PORT` | `127.0.0.1` / `8003` | địa chỉ lắng nghe (compose đặt `0.0.0.0` trong container, cổng host chỉ mở trên `127.0.0.1`) |
-| `CHAT_DEMO_ENABLED` | `true` | **công tắc tắt**: `false` thì `/chat/status` báo `enabled: false` và `/chat/stream` trả 503 |
+| `CHAT_DEMO_ENABLED` | `true` | **công tắc tắt**: `false` thì `/chat/status` báo `enabled: false` và `/chat/stream` trả 503; chỉ đọc lúc khởi động, đổi xong phải tạo lại container (`docker compose --profile chat up -d`) |
 | `CHAT_MAX_QUESTION_CHARS` | `500` | độ dài tối đa của câu hỏi |
 | `CHAT_MAX_TURNS_PER_SESSION` | `30` | số lượt hỏi tối đa của một phiên (quá thì `error` `session_full`) |
 | `CHAT_SESSION_TTL_SECONDS` | `1800` | phiên không hoạt động quá thời gian này bị xoá |
@@ -156,6 +159,14 @@ trước khi tạo phiên hay gọi Gemini: `503 {"code": "demo_disabled"}` (đ�
 Lưu ý khi công bố ra internet: phiên chỉ nằm trong RAM của một tiến trình (khởi động lại là mất, không chạy nhiều bản sao), và endpoint web **không lưu câu hỏi của người xem**
 (không ghi log, không ghi file; khác với bot terminal ở trên có `chat_logs/`). Đặt sau một reverse proxy có HTTPS, giới hạn tần suất và CORS theo domain của bạn; nhớ tắt buffer
 của proxy để SSE chảy liền (service đã gửi `X-Accel-Buffering: no`). Test tự động chạy toàn bộ đường đi bằng Gemini giả; việc gọi Gemini thật cần khoá của bạn và nên tự kiểm tra bằng lệnh `curl` ở trên.
+
+Vận hành:
+
+- Service chat giữ **một** phiên MCP cho cả tiến trình. Compose khởi động lại `chat` mỗi khi `mcp` được khởi động lại qua compose
+  (`depends_on` với `restart: true`). Riêng khi container `mcp` tự chết (nó không có chính sách `restart`), phải bật lại cả hai:
+  `docker compose --profile chat up -d mcp chat` (hoặc `restart mcp chat`), nếu không mọi lần gọi tool của chat sẽ lỗi.
+- Người xem có thể khiến bot chạy SQL chỉ đọc tuỳ ý (qua `run_readonly_sql`), kể cả đọc các view catalog của PostgreSQL. Role dùng ở đây
+  chỉ có quyền đọc và bị `statement_timeout` 5 giây, và dữ liệu mẫu là bịa, nên đó là rủi ro chấp nhận được cho bản demo; đừng trỏ service này vào dữ liệu thật.
 
 ## Ví dụ hỏi đáp thật
 

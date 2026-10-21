@@ -19,6 +19,8 @@ from app.infrastructure.observability.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Câu hỏi tối đa 500 ký tự x 4 byte UTF-8 cộng phần JSON bao quanh vẫn còn dư nhiều; body lớn hơn bị từ chối trước khi đọc hết.
+CHAT_MAX_BODY_BYTES = 16 * 1024
 STREAM_HEADERS = {"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"}
 ERROR_MESSAGES = {
     "model": "Mô hình tạm thời không trả lời được, vui lòng thử lại sau.",
@@ -36,6 +38,9 @@ class _ClosingStreamingResponse(StreamingResponse):
 
     Starlette không tự đóng generator; nếu nó đang dừng ở `yield` lúc gửi thất bại thì sẽ treo tới khi bị thu gom,
     kéo theo task Gemini. Đóng trong vùng được che chắn để việc huỷ không cắt ngang phần dọn dẹp.
+
+    Ghi đè `StreamingResponse.stream_response` công khai của Starlette; đã kiểm tra với Starlette 1.9.0
+    (`test_client_disconnect_closes_the_service_stream` sẽ báo nếu hành vi này đổi khi nâng cấp).
     """
 
     async def stream_response(self, send: Send) -> None:
@@ -46,11 +51,30 @@ class _ClosingStreamingResponse(StreamingResponse):
                 await self.body_iterator.aclose()
 
 
-async def _read_question(request: Request) -> tuple[str | None, str | None]:
+class _BodyTooLarge(Exception):
+    pass
+
+
+async def _read_limited_body(request: Request, limit: int = CHAT_MAX_BODY_BYTES) -> bytes:
+    """Đọc body nhưng dừng ngay khi vượt `limit` byte (theo Content-Length khai báo, hoặc khi đếm luồng chunked)."""
+    declared = request.headers.get("content-length")
+    if declared is not None and declared.isdigit() and int(declared) > limit:
+        raise _BodyTooLarge
+    chunks: list[bytes] = []
+    size = 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > limit:
+            raise _BodyTooLarge
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def _parse_question(raw: bytes) -> tuple[str | None, str | None]:
     """`(câu hỏi đã bỏ khoảng trắng hai đầu, session_id)`; body không hợp lệ thì câu hỏi là None."""
     try:
-        body = json.loads(await request.body())
-    except ValueError:
+        body = json.loads(raw)
+    except (ValueError, RecursionError):  # RecursionError: JSON lồng quá sâu, vd `[[[[...`
         return None, None
     if not isinstance(body, dict):
         return None, None
@@ -60,6 +84,11 @@ async def _read_question(request: Request) -> tuple[str | None, str | None]:
         message.strip() if isinstance(message, str) else None,
         session_id if isinstance(session_id, str) else None,
     )
+
+
+def _is_json(request: Request) -> bool:
+    media_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    return media_type == "application/json"
 
 
 async def _turn_events(store: SessionStore, requested_id: str | None, question: str) -> AsyncIterator[ChatEvent]:
@@ -119,7 +148,8 @@ def create_chat_app(service_factory: Callable[[], ChatService], settings_obj: Se
         max_sessions=settings_obj.chat_max_sessions,
         max_turns=settings_obj.chat_max_turns_per_session,
     )
-    app = FastAPI(title="Knowledge Base Chat API")
+    # Endpoint công khai: không phơi trang tài liệu/schema tự sinh của FastAPI.
+    app = FastAPI(title="Knowledge Base Chat API", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.sessions = store
 
     @app.get("/chat/status")
@@ -132,7 +162,13 @@ def create_chat_app(service_factory: Callable[[], ChatService], settings_obj: Se
         (hoặc `error` và đóng luồng). Lỗi kiểm tra đầu vào là JSON thường, trả trước khi tạo phiên hay gọi Gemini."""
         if not settings_obj.chat_demo_enabled:
             return JSONResponse({"code": "demo_disabled"}, status_code=503)
-        question, session_id = await _read_question(request)
+        if not _is_json(request):
+            return JSONResponse({"code": "unsupported_media_type"}, status_code=415)
+        try:
+            raw = await _read_limited_body(request)
+        except _BodyTooLarge:
+            return JSONResponse({"code": "too_long"}, status_code=413)
+        question, session_id = _parse_question(raw)
         if not question:
             return JSONResponse({"code": "invalid_question"}, status_code=422)
         if len(question) > settings_obj.chat_max_question_chars:

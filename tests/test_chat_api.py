@@ -355,3 +355,79 @@ def test_main_chat_shares_one_mcp_session_and_one_gemini_client(monkeypatch):
     assert first.mcp_session is second.mcp_session
     assert captured["config"].host == main_chat.settings.chat_api_host
     assert captured["config"].port == main_chat.settings.chat_api_port
+
+
+def test_oversized_content_length_returns_413_without_touching_sessions():
+    from app.interfaces.http.chat_api import CHAT_MAX_BODY_BYTES
+
+    factory = Factory()
+    app = create_chat_app(factory, make_settings())
+    body = json.dumps({"message": "a", "pad": "x" * CHAT_MAX_BODY_BYTES}).encode()
+    with TestClient(app) as client:
+        response = client.post("/chat/stream", content=body, headers={"content-type": "application/json"})
+    assert response.status_code == 413
+    assert response.json() == {"code": "too_long"}
+    assert factory.created == []
+    assert app.state.sessions._sessions == {}
+
+
+def test_oversized_chunked_body_returns_413_without_touching_sessions():
+    from app.interfaces.http.chat_api import CHAT_MAX_BODY_BYTES
+
+    factory = Factory()
+    app = create_chat_app(factory, make_settings())
+
+    def chunks():
+        yield b'{"message": "a", "pad": "'
+        for _ in range(CHAT_MAX_BODY_BYTES // 1024 + 2):
+            yield b"x" * 1024
+        yield b'"}'
+
+    with TestClient(app) as client:
+        response = client.post("/chat/stream", content=chunks(), headers={"content-type": "application/json"})
+    assert "content-length" not in {k.lower() for k in response.request.headers}
+    assert response.status_code == 413
+    assert response.json() == {"code": "too_long"}
+    assert factory.created == []
+    assert app.state.sessions._sessions == {}
+
+
+def test_deeply_nested_json_under_the_cap_returns_422_not_500():
+    factory = Factory()
+    with TestClient(create_chat_app(factory, make_settings()), raise_server_exceptions=False) as client:
+        response = client.post("/chat/stream", content=b"[" * 10_000, headers={"content-type": "application/json"})
+    assert response.status_code == 422
+    assert response.json() == {"code": "invalid_question"}
+    assert factory.created == []
+
+
+@pytest.mark.parametrize("content_type", ["text/plain", "application/x-www-form-urlencoded", None])
+def test_non_json_content_type_returns_415(content_type):
+    factory = Factory()
+    headers = {"content-type": content_type} if content_type else {}
+    with TestClient(create_chat_app(factory, make_settings())) as client:
+        response = client.post("/chat/stream", content=json.dumps({"message": "xin chào"}).encode(), headers=headers)
+    assert response.status_code == 415
+    assert response.json() == {"code": "unsupported_media_type"}
+    assert factory.created == []
+
+
+def test_json_content_type_with_charset_is_accepted():
+    with TestClient(create_chat_app(Factory(), make_settings())) as client:
+        response = client.post(
+            "/chat/stream", content=json.dumps({"message": "xin chào"}).encode(),
+            headers={"content-type": "Application/JSON; charset=utf-8"},
+        )
+    assert response.status_code == 200
+
+
+def test_demo_disabled_takes_precedence_over_content_type():
+    with TestClient(create_chat_app(Factory(), make_settings(chat_demo_enabled=False))) as client:
+        response = client.post("/chat/stream", content=b"x", headers={"content-type": "text/plain"})
+    assert response.status_code == 503
+
+
+def test_api_docs_are_not_exposed():
+    with TestClient(create_chat_app(Factory(), make_settings())) as client:
+        for path in ("/docs", "/redoc", "/openapi.json"):
+            assert client.get(path).status_code == 404, path

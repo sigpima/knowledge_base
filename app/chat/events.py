@@ -28,8 +28,8 @@ def _result_payload(result) -> Any:
     """Ưu tiên structured_content; không có thì parse JSON từ văn bản; không parse được thì giữ nguyên văn."""
     structured = getattr(result, "structured_content", None)
     if structured is not None:
-        # FastMCP bọc kết quả của tool có kiểu trả về là union (vd `Dict | None`) thành `{"result": ...}`; bóc lớp bọc đó
-        # để `row_count` và `error` nằm ở tầng ngoài như khi tool trả về dict thường.
+        # Quan sát được: qua MCP server thật + SDK, structured_content đến dưới dạng `{"result": {...}}`, kể cả với tool
+        # khai báo kiểu trả về `Dict`. Bóc lớp bọc đó để `row_count` và `error` nằm ở tầng ngoài.
         if isinstance(structured, dict) and set(structured) == {"result"}:
             return structured["result"]
         return structured
