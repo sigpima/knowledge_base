@@ -5,13 +5,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-chat.txt requirements.txt ./
+RUN pip install --no-cache-dir -r requirements-chat.txt
 
 COPY app ./app
 COPY scripts ./scripts
 COPY data ./data
-COPY main.py main_mcp.py ./
+COPY main.py main_mcp.py main_chat.py ./
 
 RUN useradd --create-home --uid 10001 app
 USER app

@@ -57,3 +57,19 @@ def test_non_json_text_is_used_verbatim():
 def test_preview_is_truncated_to_800_chars():
     summary = summarize_tool_result("t", {}, _result("x" * 5000))
     assert len(summary["preview"]) == 800
+
+
+def test_structured_content_wrapped_in_result_key_is_unwrapped():
+    wrapped = CallToolResult(
+        content=[TextContent(type="text", text="{}")],
+        structured_content={"result": {"rows": [{"n": 1}], "row_count": 1, "truncated": False}},
+        is_error=False,
+    )
+    assert summarize_tool_result("run_readonly_sql", {"query": "q"}, wrapped)["row_count"] == 1
+
+    failed = CallToolResult(
+        content=[TextContent(type="text", text="{}")],
+        structured_content={"result": {"error": "boom"}},
+        is_error=False,
+    )
+    assert summarize_tool_result("run_readonly_sql", {"query": "q"}, failed)["ok"] is False

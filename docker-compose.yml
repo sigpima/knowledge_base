@@ -1,4 +1,4 @@
-# Demo một lệnh: `docker compose up` dựng Postgres, nạp dữ liệu mẫu rồi bật API ingest + MCP server.
+# Demo một lệnh: `docker compose up` dựng Postgres, nạp dữ liệu mẫu rồi bật API ingest + MCP server + API chat cho web.
 # Mật khẩu dưới đây chỉ dành cho demo trên máy cá nhân; đổi bằng biến môi trường hoặc file .env.
 
 x-app: &app
@@ -51,3 +51,16 @@ services:
     command: python main_mcp.py
     ports:
       - "127.0.0.1:8002:8002"
+
+  chat:
+    <<: *app
+    depends_on:
+      - mcp
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}  # khoá Gemini lấy từ môi trường máy chủ/.env, không có giá trị mặc định
+      MCP_SERVER_URL: http://mcp:8002/mcp
+      CHAT_API_HOST: 0.0.0.0  # trong container; cổng host vẫn chỉ mở trên 127.0.0.1 (xem ports)
+    command: python main_chat.py
+    ports:
+      - "127.0.0.1:8003:8003"
+    restart: unless-stopped

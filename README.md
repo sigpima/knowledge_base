@@ -109,6 +109,51 @@ bạn thấy số liệu đến từ đâu (thêm `--quiet` để ẩn). Lệnh 
   bot không đọc lại chúng. Tắt bằng `--no-log`, đổi thư mục bằng `--log-dir` hoặc `CHAT_LOG_DIR`.
 - Đổi mô hình bằng `--model` hoặc `GEMINI_CHAT_MODEL`; trỏ tới MCP server khác bằng `--url` hoặc `MCP_SERVER_URL`.
 
+## API chat cho web
+
+Muốn nhúng hộp chat vào website? Service `chat` (`main_chat.py`, cổng 8003) phát câu trả lời dưới dạng **SSE** (Server-Sent Events):
+trình duyệt thấy từng lần mô hình gọi tool, rồi câu trả lời. Service này tách khỏi API ingest (có quyền ghi) và chỉ nói chuyện với MCP server chỉ đọc.
+Cần `GEMINI_API_KEY`; `docker compose up` đã bật sẵn service này, nhưng khi chưa có khoá nó thoát và tự khởi động lại liên tục, nên đặt khoá trước:
+
+```bash
+export GEMINI_API_KEY=...        # hoặc ghi vào file .env cạnh docker-compose.yml
+docker compose up --build
+curl localhost:8003/chat/status                      # {"enabled":true}
+curl -N -X POST localhost:8003/chat/stream -H 'content-type: application/json' \
+  -d '{"message":"Báo giá mới nhất giá bao nhiêu?"}'
+```
+
+**`POST /chat/stream`**, body JSON `{"message": "...", "session_id": null}`, trả `text/event-stream`. Bỏ trống `session_id` ở lượt đầu;
+lấy `session_id` trong sự kiện `start` và gửi lại ở các lượt sau để hỏi tiếp trong cùng một phiên.
+
+| Sự kiện | Dữ liệu (`data`, JSON) |
+| --- | --- |
+| `start` | `{"session_id"}` |
+| `tool_call` | `{"call_id", "tool", "args"}` |
+| `tool_result` | `{"call_id", "tool", "ok", "duration_ms", "row_count", "sql", "preview"}` (`sql` chỉ có với `run_readonly_sql`; `preview` bị cắt ngắn) |
+| `answer` | `{"text"}` |
+| `done` | `{"duration_ms"}` |
+| `error` | `{"code": "model" \| "session_full" \| "internal", "message"}`; sau `error` luồng đóng và **không** có `done` |
+
+Một lượt bình thường đi theo thứ tự `start`, các cặp `tool_call`/`tool_result`, `answer`, `done`. Lỗi kiểm tra đầu vào trả JSON thường
+trước khi tạo phiên hay gọi Gemini: `503 {"code": "demo_disabled"}` (đã tắt), `422 {"code": "invalid_question"}` (rỗng hoặc sai dạng),
+`422 {"code": "too_long"}` (quá `CHAT_MAX_QUESTION_CHARS` ký tự, mặc định 500). **`GET /chat/status`** trả `{"enabled": true|false}` để web ẩn/hiện hộp chat.
+
+| Biến môi trường | Mặc định | Ý nghĩa |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | (bắt buộc) | khoá Gemini; thiếu thì `main_chat.py` không chạy |
+| `MCP_SERVER_URL` | `http://127.0.0.1:8002/mcp` | MCP server để gọi tool (trong compose: `http://mcp:8002/mcp`) |
+| `CHAT_API_HOST` / `CHAT_API_PORT` | `127.0.0.1` / `8003` | địa chỉ lắng nghe (compose đặt `0.0.0.0` trong container, cổng host chỉ mở trên `127.0.0.1`) |
+| `CHAT_DEMO_ENABLED` | `true` | **công tắc tắt**: `false` thì `/chat/status` báo `enabled: false` và `/chat/stream` trả 503 |
+| `CHAT_MAX_QUESTION_CHARS` | `500` | độ dài tối đa của câu hỏi |
+| `CHAT_MAX_TURNS_PER_SESSION` | `30` | số lượt hỏi tối đa của một phiên (quá thì `error` `session_full`) |
+| `CHAT_SESSION_TTL_SECONDS` | `1800` | phiên không hoạt động quá thời gian này bị xoá |
+| `CHAT_MAX_SESSIONS` | `200` | số phiên đồng thời tối đa |
+
+Lưu ý khi công bố ra internet: phiên chỉ nằm trong RAM của một tiến trình (khởi động lại là mất, không chạy nhiều bản sao), và endpoint web **không lưu câu hỏi của người xem**
+(không ghi log, không ghi file; khác với bot terminal ở trên có `chat_logs/`). Đặt sau một reverse proxy có HTTPS, giới hạn tần suất và CORS theo domain của bạn; nhớ tắt buffer
+của proxy để SSE chảy liền (service đã gửi `X-Accel-Buffering: no`). Test tự động chạy toàn bộ đường đi bằng Gemini giả; việc gọi Gemini thật cần khoá của bạn và nên tự kiểm tra bằng lệnh `curl` ở trên.
+
 ## Ví dụ hỏi đáp thật
 
 Bốn ví dụ sau do một agent Claude trả lời bằng cách gọi các tool trên chính bộ dữ liệu `data/sample/`. Số liệu lấy

@@ -15,6 +15,7 @@ import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
+import httpx
 import pytest
 from google import genai
 from google.genai import types
@@ -22,7 +23,9 @@ from sqlalchemy import text
 
 from app.chat import cli
 from app.chat.service import ChatService, mcp_session
+from app.infrastructure.config.config import Settings
 from app.infrastructure.database.postgres.session import SessionLocal, engine
+from app.interfaces.http.chat_api import create_chat_app
 from scripts.mcp_client import McpSession
 from scripts.seed import seed
 
@@ -139,3 +142,35 @@ def test_main_runs_a_whole_terminal_session(mcp_url, fake_gemini, monkeypatch, c
     (log_file,) = tmp_path.glob("chat-*.json")
     turns = json.loads(log_file.read_text(encoding="utf-8"))
     assert [(t["question"], t["answer"]) for t in turns] == [("Có bao nhiêu công trình?", "Có 24 công trình.")]
+
+
+def _parse_sse(text: str) -> list[tuple[str, dict]]:
+    events = []
+    for block in text.strip().split("\n\n"):
+        lines = dict(line.split(": ", 1) for line in block.split("\n"))
+        events.append((lines["event"], json.loads(lines["data"])))
+    return events
+
+
+def test_stream_endpoint_runs_the_real_mcp_tool_end_to_end(mcp_url, fake_gemini):
+    base_url, _ = fake_gemini
+
+    async def go():
+        async with mcp_session(mcp_url) as session:
+            client = _client(base_url)
+            app = create_chat_app(lambda: ChatService(session, client, "gemini-giả"), Settings(_env_file=None))
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+                response = await http.post("/chat/stream", json={"message": "Có bao nhiêu công trình?"})
+                return response.headers["content-type"], _parse_sse(response.text)
+
+    content_type, events = asyncio.run(go())
+
+    assert content_type.startswith("text/event-stream")
+    assert [name for name, _ in events] == ["start", "tool_call", "tool_result", "answer", "done"]
+    by_name = dict(events)
+    assert by_name["tool_call"]["tool"] == "run_readonly_sql"
+    assert by_name["tool_call"]["args"]["query"] == QUERY
+    assert by_name["tool_result"]["ok"] is True
+    assert by_name["tool_result"]["row_count"] == 1
+    assert by_name["answer"]["text"] == "Có 24 công trình."

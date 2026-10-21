@@ -18,6 +18,8 @@ python -m scripts.generate_sample_data --out data/sample   # sinh lại dữ li�
 python -m scripts.init_db && python -m scripts.seed data/sample   # cần DATABASE_URL, RO_PASSWORD
 python -m app.cli ingest PATH             # nhập file/thư mục YAML (--replace để thay công trình cùng tên)
 python -m app.chat                        # bot hỏi đáp trong terminal (cần GEMINI_API_KEY và MCP server đang chạy)
+python main_chat.py                       # API chat cho web (SSE, cổng 8003; cần GEMINI_API_KEY và MCP server đang chạy)
+GEMINI_API_KEY=... docker compose up      # compose cũng bật service `chat` (127.0.0.1:8003); thiếu khoá thì nó thoát và tự khởi động lại
 ```
 
 Test (Postgres thật, bắt buộc đặt biến môi trường, không có giá trị mặc định):
@@ -40,6 +42,8 @@ trên DB nào đó, hoặc `CREATE ROLE knowledge_base_ro LOGIN PASSWORD '...'`)
 - `app/core/services/knowledge_service.py` – lớp truy vấn đọc, MCP dùng với session chỉ đọc.
 - `app/interfaces/http/api.py` – service ingest (FastAPI): `/health`, `/ingest`, `/work-items/{id}`.
 - `app/chat/` – bot terminal tuỳ chọn: `service.py` (Gemini tự gọi tool MCP, nhớ trong phiên), `history.py` (log JSON mỗi phiên, chỉ ghi), `cli.py` (vòng lặp REPL). `requirements-chat.txt` chứa `google-genai`; test e2e dùng SDK thật + server Gemini giả cục bộ nên không cần khoá.
+- `app/chat/events.py` (sự kiện SSE + tóm tắt kết quả tool), `app/chat/sessions.py` (`SessionStore`: TTL, giới hạn phiên/lượt, khoá theo phiên); `ChatService.ask_stream` phát sự kiện từng bước.
+- `app/interfaces/http/chat_api.py` + `main_chat.py` – API chat cho web: `POST /chat/stream` (SSE: `start`, `tool_call`, `tool_result`, `answer`, `done` | `error`) và `GET /chat/status`, cổng 8003, biến `CHAT_*` (công tắc `CHAT_DEMO_ENABLED`). Không bao giờ lưu câu hỏi của người xem. Image Docker cài `requirements-chat.txt`.
 - `main_mcp.py` – MCP server (streamable-http, cổng 8002), đúng 10 tool, kết nối bằng role Postgres **chỉ đọc**.
 - `scripts/` – sinh dữ liệu mẫu, seed, init DB, smoke test, client MCP tối giản.
 - `data/sample/` – 24 file YAML giả (được commit; phải khớp đầu ra của bộ sinh – có test).
