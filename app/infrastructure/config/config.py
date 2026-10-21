@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     gemini_chat_model: str = "gemini-3.5-flash-lite"
     gemini_base_url: str = ""  # để trống = máy chủ Gemini mặc định
     chat_log_dir: str = "chat_logs"
+    # API chat cho website (SSE): bật/tắt bản demo, giới hạn câu hỏi/phiên và địa chỉ lắng nghe.
+    chat_demo_enabled: bool = True
+    chat_max_question_chars: int = 500
+    chat_max_turns_per_session: int = 30
+    chat_session_ttl_seconds: int = 1800
+    chat_max_sessions: int = 200
+    chat_api_host: str = "127.0.0.1"
+    chat_api_port: int = 8003
     log_level: str = "INFO"
 
 

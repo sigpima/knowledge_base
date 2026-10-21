@@ -22,7 +22,7 @@ SYSTEM_INSTRUCTION = (
     "Chỉ dùng các công cụ (tools) được cung cấp để tra cứu dữ liệu, không tự bịa thông tin. "
     "Mọi con số bạn nêu phải lấy nguyên từ kết quả công cụ; nếu công cụ không đủ dữ liệu để kết luận, hãy nói rõ giới hạn. "
     "Các trường *_diff của công cụ so sánh được tính là B trừ A. "
-    "Trả lời ngắn gọn, chính xác, bằng tiếng Việt, nêu cụ thể tên công trình, đơn giá và tỷ lệ phần trăm."
+    "Trả lời ngắn gọn, chính xác, bằng ngôn ngữ của câu hỏi (mặc định tiếng Việt), nêu cụ thể tên công trình, đơn giá và tỷ lệ phần trăm."
 )
 
 

@@ -117,3 +117,8 @@ def test_failure_raises_chat_error_and_the_session_stays_usable():
 def test_build_service_requires_an_api_key():
     with pytest.raises(MissingApiKeyError, match="GEMINI_API_KEY"):
         build_service(mcp_session=object(), api_key="", model="m")
+
+
+def test_system_instruction_follows_the_language_of_the_question():
+    assert "ngôn ngữ của câu hỏi" in SYSTEM_INSTRUCTION
+    assert "tiếng Việt" in SYSTEM_INSTRUCTION

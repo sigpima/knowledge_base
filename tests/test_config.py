@@ -24,3 +24,29 @@ def test_session_database_url_is_sourced_from_settings():
     from app.infrastructure.database.postgres import session
 
     assert session.DATABASE_URL == settings.database_url
+
+
+def test_chat_defaults(monkeypatch):
+    for name in (
+        "CHAT_DEMO_ENABLED",
+        "CHAT_MAX_QUESTION_CHARS",
+        "CHAT_MAX_TURNS_PER_SESSION",
+        "CHAT_SESSION_TTL_SECONDS",
+        "CHAT_MAX_SESSIONS",
+        "CHAT_API_HOST",
+        "CHAT_API_PORT",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=None)
+    assert settings.chat_demo_enabled is True
+    assert settings.chat_max_question_chars == 500
+    assert settings.chat_max_turns_per_session == 30
+    assert settings.chat_session_ttl_seconds == 1800
+    assert settings.chat_max_sessions == 200
+    assert settings.chat_api_host == "127.0.0.1"
+    assert settings.chat_api_port == 8003
+
+
+def test_chat_demo_can_be_disabled_by_env(monkeypatch):
+    monkeypatch.setenv("CHAT_DEMO_ENABLED", "false")
+    assert Settings(_env_file=None).chat_demo_enabled is False
