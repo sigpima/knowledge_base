@@ -1,5 +1,7 @@
 import asyncio
 
+import pytest
+
 from app.chat.sessions import SessionStore
 
 
@@ -130,6 +132,46 @@ def test_lock_is_one_per_live_session():
     asyncio.run(scenario())
 
 
-def test_lock_of_unknown_session_is_not_stored():
-    store, _, _ = make_store()
-    assert store.lock("khong-ton-tai") is not store.lock("khong-ton-tai")
+def test_lock_raises_key_error_for_unknown_or_expired_id():
+    store, clock, _ = make_store(ttl_seconds=60)
+    with pytest.raises(KeyError):
+        store.lock("khong-ton-tai")
+    session_id, _ = store.get_or_create(None)
+    clock.advance(61)
+    with pytest.raises(KeyError):
+        store.lock(session_id)
+
+
+def test_record_turn_makes_session_most_recently_used():
+    store, _, _ = make_store(max_sessions=2)
+    first_id, first = store.get_or_create(None)
+    second_id, _ = store.get_or_create(None)
+    store.record_turn(first_id)
+    store.get_or_create(None)
+    assert store.get_or_create(first_id) == (first_id, first)
+    assert store.get_or_create(second_id)[0] != second_id
+
+
+def test_record_turn_restarts_ttl_window():
+    store, clock, _ = make_store(ttl_seconds=60)
+    session_id, service = store.get_or_create(None)
+    clock.advance(50)
+    store.record_turn(session_id)
+    clock.advance(50)
+    assert store.get_or_create(session_id) == (session_id, service)
+
+
+def test_record_turn_on_expired_session_is_noop():
+    store, clock, _ = make_store(ttl_seconds=60)
+    session_id, _ = store.get_or_create(None)
+    clock.advance(61)
+    store.record_turn(session_id)
+    assert store.is_full(session_id) is False
+    with pytest.raises(KeyError):
+        store.lock(session_id)
+
+
+def test_max_sessions_must_be_positive():
+    for bad in (0, -1):
+        with pytest.raises(ValueError):
+            make_store(max_sessions=bad)

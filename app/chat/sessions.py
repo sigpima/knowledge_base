@@ -35,6 +35,8 @@ class SessionStore:
         max_turns: int,
         clock: Callable[[], float] = time.monotonic,
     ):
+        if max_sessions < 1:
+            raise ValueError("max_sessions phải >= 1")
         self._factory = factory
         self._ttl_seconds = ttl_seconds
         self._max_sessions = max_sessions
@@ -66,21 +68,35 @@ class SessionStore:
         self._sessions[new_id] = session
         return new_id, session.service
 
+    def _live(self, session_id: str) -> _Session | None:
+        """Phiên còn hạn của `session_id` (sau khi dọn phiên hết hạn), hoặc None."""
+        self._purge_expired(self._clock())
+        return self._sessions.get(session_id)
+
     def record_turn(self, session_id: str) -> None:
-        """Cộng một lượt cho phiên; bỏ qua nếu phiên không còn."""
-        session = self._sessions.get(session_id)
+        """Cộng một lượt và coi như phiên vừa được dùng (làm mới TTL, đưa về cuối hàng đợi đẩy ra).
+
+        Phiên đang chạy lâu nhờ vậy không bị đẩy ra khi lượt kết thúc. Bỏ qua nếu phiên không còn.
+        """
+        session = self._live(session_id)
         if session is not None:
             session.turns += 1
+            session.last_used = self._clock()
+            self._sessions.move_to_end(session_id)
 
     def is_full(self, session_id: str) -> bool:
         """Phiên đã dùng đủ số lượt tối đa; phiên không tồn tại thì chưa đầy."""
-        session = self._sessions.get(session_id)
+        session = self._live(session_id)
         return session is not None and session.turns >= self._max_turns
 
     def lock(self, session_id: str) -> asyncio.Lock:
         """Khóa duy nhất của phiên đang sống để tuần tự hóa các yêu cầu cùng phiên.
 
-        Khóa sinh cùng phiên và mất cùng phiên (hết hạn, bị đẩy ra). Id không tồn tại nhận khóa tạm, không được lưu.
+        Khóa sinh cùng phiên và mất cùng phiên (hết hạn, bị đẩy ra). Id không tồn tại hoặc đã hết hạn thì
+        ném `KeyError` (không trả khóa tạm, tránh mất tuần tự hóa một cách âm thầm). Người gọi phải gọi
+        `get_or_create` rồi `lock` liền nhau, đồng bộ, không có `await` ở giữa.
         """
-        session = self._sessions.get(session_id)
-        return session.lock if session is not None else asyncio.Lock()
+        session = self._live(session_id)
+        if session is None:
+            raise KeyError(session_id)
+        return session.lock
