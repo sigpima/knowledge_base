@@ -113,15 +113,18 @@ bạn thấy số liệu đến từ đâu (thêm `--quiet` để ẩn). Lệnh 
 
 Muốn nhúng hộp chat vào website? Service `chat` (`main_chat.py`, cổng 8003) phát câu trả lời dưới dạng **SSE** (Server-Sent Events):
 trình duyệt thấy từng lần mô hình gọi tool, rồi câu trả lời. Service này tách khỏi API ingest (có quyền ghi) và chỉ nói chuyện với MCP server chỉ đọc.
-Cần `GEMINI_API_KEY`; `docker compose up` đã bật sẵn service này, nhưng khi chưa có khoá nó thoát và tự khởi động lại liên tục, nên đặt khoá trước:
+Cần `GEMINI_API_KEY`. Trong compose, service này nằm sau *profile* `chat` nên **không** chạy khi bạn gõ `docker compose up` thường
+(lệnh đó vẫn chỉ bật db + seed + api + mcp, không cần khoá). Muốn bật thêm API chat, đặt khoá rồi thêm `--profile chat` (hoặc `COMPOSE_PROFILES=chat`):
 
 ```bash
 export GEMINI_API_KEY=...        # hoặc ghi vào file .env cạnh docker-compose.yml
-docker compose up --build
+docker compose --profile chat up --build -d     # hoặc: GEMINI_API_KEY=... docker compose --profile chat up -d
 curl localhost:8003/chat/status                      # {"enabled":true}
 curl -N -X POST localhost:8003/chat/stream -H 'content-type: application/json' \
   -d '{"message":"Báo giá mới nhất giá bao nhiêu?"}'
 ```
+
+Dừng cả service chat: `docker compose --profile chat down` (thêm `-v` để xoá dữ liệu); `docker compose down` không kèm profile sẽ để lại container `chat`.
 
 **`POST /chat/stream`**, body JSON `{"message": "...", "session_id": null}`, trả `text/event-stream`. Bỏ trống `session_id` ở lượt đầu;
 lấy `session_id` trong sự kiện `start` và gửi lại ở các lượt sau để hỏi tiếp trong cùng một phiên.

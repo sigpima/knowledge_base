@@ -19,7 +19,7 @@ python -m scripts.init_db && python -m scripts.seed data/sample   # cần DATABA
 python -m app.cli ingest PATH             # nhập file/thư mục YAML (--replace để thay công trình cùng tên)
 python -m app.chat                        # bot hỏi đáp trong terminal (cần GEMINI_API_KEY và MCP server đang chạy)
 python main_chat.py                       # API chat cho web (SSE, cổng 8003; cần GEMINI_API_KEY và MCP server đang chạy)
-GEMINI_API_KEY=... docker compose up      # compose cũng bật service `chat` (127.0.0.1:8003); thiếu khoá thì nó thoát và tự khởi động lại
+GEMINI_API_KEY=... docker compose --profile chat up -d   # thêm service `chat` (127.0.0.1:8003); `docker compose up` thường không bật nó
 ```
 
 Test (Postgres thật, bắt buộc đặt biến môi trường, không có giá trị mặc định):
