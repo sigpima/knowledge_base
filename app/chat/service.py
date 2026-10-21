@@ -199,8 +199,9 @@ class ChatService:
                 task.cancel()
                 # `asyncio.wait` không ném lỗi của task, nhưng nếu chính task gọi bị huỷ thì vẫn để huỷ lan ra ngoài.
                 await asyncio.wait({task})
-                if not task.cancelled():
-                    task.exception()  # đã đọc lỗi để asyncio không cảnh báo "never retrieved"
+            if not task.cancelled():
+                # Đọc lỗi (kể cả khi task đã xong trước lúc đóng luồng) để asyncio không cảnh báo "never retrieved".
+                task.exception()
 
     async def tool_names(self) -> list[str]:
         return [tool.name for tool in (await self.mcp_session.list_tools()).tools]

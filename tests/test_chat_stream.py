@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import json
 
 import pytest
@@ -61,6 +62,8 @@ class ToolCallingChat:
                 self.tool_errors.append(str(exc))
         if step.get("hang"):
             await asyncio.Event().wait()
+        if step.get("raise"):
+            raise step["raise"]
         return FakeResponse(step.get("text"))
 
 
@@ -148,8 +151,10 @@ def test_gemini_failure_emits_error_model_and_no_done():
 
 
 def test_two_concurrent_streams_do_not_share_events():
-    service_a, _ = _service([{"calls": [("tool_a", {"n": 1}), ("tool_a", {"n": 2})], "text": "A"}], FakeMcpSession(delay=0.01))
-    service_b, _ = _service([{"calls": [("tool_b", {"n": 1})], "text": "B"}], FakeMcpSession(delay=0.01))
+    # Như production: một phiên MCP dùng chung cho mọi người xem, nên hàng đợi không được gắn vào đối tượng phiên.
+    shared = FakeMcpSession(delay=0.01)
+    service_a, _ = _service([{"calls": [("tool_a", {"n": 1}), ("tool_a", {"n": 2})], "text": "A"}], shared)
+    service_b, _ = _service([{"calls": [("tool_b", {"n": 1})], "text": "B"}], shared)
 
     async def both():
         return await asyncio.gather(_collect(service_a, "a"), _collect(service_b, "b"))
@@ -181,6 +186,25 @@ def test_closing_the_stream_cancels_the_gemini_task():
     assert first.type == "tool_call"
     assert task.cancelled() is True
     assert others == []
+
+
+def test_closing_early_after_gemini_failed_retrieves_the_task_error():
+    service, client = _service([{"calls": [("t", {})], "raise": RuntimeError("quota exceeded")}])
+    reported = []
+
+    async def run():
+        asyncio.get_running_loop().set_exception_handler(lambda loop, context: reported.append(context))
+        stream = service.ask_stream("q")
+        await stream.__anext__()
+        task = client.created[0].tasks[0]
+        await asyncio.wait({task})  # Gemini đã lỗi xong, nhưng người xem đóng luồng trước khi đọc tới kết quả
+        await stream.aclose()
+
+    asyncio.run(run())
+    client.created[0].tasks.clear()  # bỏ tham chiếu cuối tới task để asyncio báo lỗi chưa đọc (nếu có) khi thu gom
+    gc.collect()
+
+    assert not any("never retrieved" in str(context.get("message")) for context in reported)
 
 
 def test_tool_calls_without_a_stream_just_call_the_parent():
