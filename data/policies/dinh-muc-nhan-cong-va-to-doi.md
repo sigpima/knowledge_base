@@ -26,7 +26,7 @@ Tài liệu này giải thích cách Sơn Việt Demo Co. tính chi phí nhân c
 ## Ngày công trên m²
 
 1. Mỗi bước thi công có một định mức ngày công trên mét vuông, nằm trong khoảng từ 0,015 đến 0,04 ngày công/m² cho mỗi bước.
-2. Bước nhẹ và nhanh như Vệ sinh bề mặt hoặc lăn lớp phủ thường ở đầu thấp của khoảng, còn các bước tốn tay như Bả matit lớp 1, Chà nhám hoặc Xử lý khuyết tật bề mặt ở đầu cao.
+2. Định mức của từng bước nằm trong khoảng trên tùy cường độ công việc thực tế của bước đó; tài liệu này không quy định riêng mức cho từng loại bước.
 3. Số ngày công của một hạng mục bằng tổng định mức của các bước trong quy trình, nhân diện tích, rồi nhân hệ số ở các mục bên dưới.
 4. Một ngày công là công của một thợ trong một ngày làm việc; đơn giá ngày công phụ thuộc cấp thợ (thợ chính, thợ phụ).
 
@@ -50,7 +50,7 @@ Ngoài hệ số hạng mục, ngày công cơ sở còn nhân thêm hệ số n
 
 1. Đội trưởng, giám sát và an toàn lao động không trực tiếp sơn nhưng được chia vào ngày công.
 2. Thời gian đi lại, bốc dỡ dụng cụ, dọn dẹp cuối ca nằm trong ngày công, không báo thêm riêng.
-3. Công trình xa trung tâm, nhiều tầng không thang máy, hoặc cần làm ban đêm thường dùng hệ số gần 1,25; công trình gần, thuận tiện dùng gần 1,05.
+3. Hệ số nhân công nằm trong khoảng 1,05 đến 1,25 tùy công trình; công trình càng xa hoặc càng bất tiện thì hệ số càng cao.
 
 Lý do: nếu không gộp chi phí quản lý vào ngày công, mỗi báo giá sẽ phải liệt kê hàng chục khoản nhỏ khó kiểm soát. Gộp thành hệ số giúp báo giá gọn và minh bạch ở mức độ phù hợp. Khi so sánh nhân công giữa hai báo giá, hãy xem cả hệ số hạng mục lẫn hệ số nhân công; hệ số 1,25 so với 1,05 đã tạo chênh khoảng 19% dù khối lượng thợ như nhau.
 

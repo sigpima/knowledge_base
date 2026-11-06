@@ -52,8 +52,8 @@
 - question: "Ngày bàn giao cuối cùng, công ty phải giao lại những gì cho khách?"
   expect: {slug: quy-trinh-nghiem-thu, section: "Nghiệm thu bàn giao hoàn công"}
 
-# Đáng bàn: thi-cong-chong-tham (mục "Chống thấm lớp 2") nói chỉ huy trưởng "nghiệm thu bằng mắt" trước khi thử ngâm nước,
-# nhưng đó là kiểm tra nội bộ; câu hỏi nói về BIÊN BẢN nghiệm thu, và điều kiện ký biên bản chỉ nằm ở mục giai đoạn 2.
+# Đáng bàn: thi-cong-chong-tham (mục "Chống thấm lớp 2") có bước "kiểm tra bằng mắt" nội bộ trước khi thử ngâm nước,
+# nhưng đó chưa phải nghiệm thu; câu hỏi nói về BIÊN BẢN nghiệm thu, và điều kiện ký biên bản chỉ nằm ở mục giai đoạn 2.
 - question: "Biên bản nghiệm thu hạng mục chống thấm chỉ được ký khi đã đạt điều kiện gì?"
   expect: {slug: quy-trinh-nghiem-thu, section: "Nghiệm thu giai đoạn 2"}
 

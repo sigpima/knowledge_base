@@ -78,6 +78,21 @@ def test_warranty_policy_covers_extension_semantics(warranty):
     assert "quy ước" in body and "demo" in body, "phải nêu rõ đây là quy ước của bản demo"
 
 
+def test_mixed_group_quote_uses_the_longest_standard_period(warranty):
+    """Báo giá gộp nhóm có thời hạn tiêu chuẩn khác nhau mà không nêu thời hạn chung: dùng thời hạn dài nhất, nằm trong mục nguyên tắc."""
+    body = warranty["chinh-sach-bao-hanh"].body
+    principle = body.split("## Nguyên tắc: báo giá ghi riêng thì ưu tiên", 1)[1].split("\n## ", 1)[0]
+
+    rule = re.search(r"(?m)^\d+\. Nếu báo giá gộp nhiều nhóm[^\n]*$", principle)
+    assert rule, "thiếu quy tắc cho báo giá gộp nhiều nhóm thời hạn khác nhau"
+    assert "dài nhất" in rule.group(0) and "ngắn nhất" not in principle
+    assert "12 tháng" in rule.group(0) and "36 tháng" in rule.group(0), "ví dụ phải là hai nhóm có thời hạn khác nhau"
+    reason = principle.split("Lý do:", 1)[1]
+    assert re.search(r"báo giá gộp[^.]*không được thấp hơn", reason), "thiếu lý do của quy tắc"
+    # quy tắc mới không được làm mất nguyên tắc cũ: báo giá ghi riêng thì ưu tiên, và chỉ một thời hạn chung
+    assert "ưu tiên" in principle and "một thời hạn chung" in principle
+
+
 def test_acceptance_names_every_payment_trigger_verbatim(warranty):
     body = warranty["quy-trinh-nghiem-thu"].body
     missing = [desc for _, desc in PAYMENT_TRIGGERS if desc not in body]

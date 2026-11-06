@@ -27,7 +27,7 @@ Lý do: gỉ là lớp xốp, giữ ẩm và tiếp tục ăn sâu vào kim lo�
 1. Sơn lót chống gỉ thi công 1 lớp, phủ kín cả mép, cạnh, mối hàn và đầu bu lông.
 2. Lớp lót phải được sơn trong vòng 24 giờ sau khi chà nhám xong. Nếu để quá 24 giờ, đặc biệt khi trời ẩm, phải chà nhám lại bề mặt.
 3. Chỉ sơn lót khi kim loại khô ráo, không có sương hoặc nước đọng. Không sơn lúc nền còn nóng do nắng gắt.
-4. Dùng lót chống gỉ cùng hệ với sơn phủ, ví dụ lót của dòng Đại Phát Alkyd cho sơn phủ Đại Phát Alkyd, để hai lớp tương thích.
+4. Dùng lót chống gỉ cùng hệ với sơn phủ, để hai lớp tương thích.
 
 Lý do: kim loại sạch vừa chà nhám phản ứng với oxy và hơi ẩm trong không khí và bắt đầu gỉ lại trong vài giờ, nhanh nhất ở vùng ven biển hoặc ngày nồm. Giới hạn 24 giờ là mức trần chấp nhận được; quá mức đó lớp gỉ mỏng đã hình thành dưới lớp lót mà mắt thường không thấy. Một lớp lót là đủ vì chức năng của nó là bám và chống gỉ, còn độ dày màng và màu do lớp phủ đảm nhiệm.
 

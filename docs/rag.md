@@ -27,7 +27,7 @@ flowchart LR
   (COSINE, chỉ trong các dòng cùng model). Kết quả: `{"passages": [{"slug", "title", "doc_type", "section", "text", "score"}], "row_count": n}`,
   xếp theo `score` giảm dần. `passages` rỗng nghĩa là không có quy định phù hợp. Bot chat được hướng dẫn chỉ dựa vào `text` và trích nguồn dạng `[slug › section]`.
 - **Cắt đoạn:** theo heading. Văn bản được tách theo `##`/`###`; mỗi đoạn thuộc đúng một mục, dài tối đa 1000 ký tự, không chồng lấn.
-  Mỗi đoạn được nhúng cùng đường dẫn mục (`tiêu đề › mục`) để câu hỏi ngắn vẫn khớp đúng ngữ cảnh. 12 tài liệu hiện cho 67 đoạn.
+  Mỗi đoạn được nhúng cùng đường dẫn mục (`tiêu đề › mục`) để câu hỏi ngắn vẫn khớp đúng ngữ cảnh. 12 tài liệu hiện cho 68 đoạn.
 
 ## Bộ tài liệu mẫu (`data/policies/`)
 
