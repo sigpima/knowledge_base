@@ -131,6 +131,7 @@ def test_ingest_policies_ingests_directory_and_prunes(policy_env, tmp_path, caps
 
 
 def test_ingest_policies_again_is_unchanged_and_without_prune_keeps_extras(policy_env, tmp_path, capsys):
+    _seed_old(policy_env, "tai-lieu-thua")
     _write_policy(tmp_path, "a.md", "tai-lieu-a")
     assert main(["ingest-policies", str(tmp_path)]) == 0
     calls = len(policy_env.embedder.calls)
@@ -140,6 +141,7 @@ def test_ingest_policies_again_is_unchanged_and_without_prune_keeps_extras(polic
 
     assert '"status": "unchanged"' in capsys.readouterr().out
     assert len(policy_env.embedder.calls) == calls
+    assert policy_env.store.get_document_meta("tai-lieu-thua") is not None  # không có --prune thì tài liệu thừa còn nguyên
 
 
 def test_ingest_policies_bad_file_exits_1_ingests_good_and_skips_prune(policy_env, tmp_path, capsys):
@@ -158,6 +160,7 @@ def test_ingest_policies_bad_file_exits_1_ingests_good_and_skips_prune(policy_en
 
 
 def test_ingest_policies_duplicate_slug_first_wins_later_skipped(policy_env, tmp_path, capsys):
+    _seed_old(policy_env, "khong-xoa")
     _write_policy(tmp_path, "a.md", "trung-slug", title="Bản A")
     _write_policy(tmp_path, "b.md", "trung-slug", title="Bản B")
     _write_policy(tmp_path, "c.md", "khac-slug")
@@ -171,6 +174,7 @@ def test_ingest_policies_duplicate_slug_first_wins_later_skipped(policy_env, tmp
     assert policy_env.store.search(
         policy_env.embedder.embed_query("Bản A"), policy_env.embedder.model, 10, None
     )[0].title == "Bản A"
+    assert policy_env.store.get_document_meta("khong-xoa") is not None  # có file lỗi (trùng slug) nên --prune không chạy
 
 
 def test_ingest_policies_missing_path_exits_2_without_touching_store(policy_env, tmp_path, capsys):
@@ -241,6 +245,7 @@ def test_ingest_policies_embedding_failure_on_one_file_keeps_going(monkeypatch, 
         return real(texts)
 
     monkeypatch.setattr(policy_env.embedder, "embed_documents", flaky)
+    _seed_old(policy_env, "khong-xoa")
     _write_policy(tmp_path, "a.md", "tai-lieu-a", body="## Mục\n\nhỏng embedding\n")
     _write_policy(tmp_path, "b.md", "tai-lieu-b")
 
@@ -251,6 +256,95 @@ def test_ingest_policies_embedding_failure_on_one_file_keeps_going(monkeypatch, 
     assert "a.md" in captured.err and "hết hạn mức" in captured.err
     assert policy_env.store.get_document_meta("tai-lieu-a") is None
     assert policy_env.store.get_document_meta("tai-lieu-b") is not None
+    assert policy_env.store.get_document_meta("khong-xoa") is not None  # nạp lỗi một file nên --prune không chạy
+
+
+def _forbid_prune(monkeypatch, store) -> list[set[str]]:
+    """Thay `delete_other_than` bằng bản ghi lại lời gọi (và không xoá gì), để khẳng định --prune có chạy hay không."""
+    calls: list[set[str]] = []
+    monkeypatch.setattr(store, "delete_other_than", lambda keep: calls.append(set(keep)) or [])
+    return calls
+
+
+def test_ingest_policies_all_files_bad_with_prune_leaves_the_store_untouched(policy_env, tmp_path, capsys, monkeypatch):
+    _seed_old(policy_env, "khong-xoa")
+    prune_calls = _forbid_prune(monkeypatch, policy_env.store)
+    (tmp_path / "a-hong.md").write_text("không có front matter\n", encoding="utf-8")
+    (tmp_path / "b-hong.md").write_text("---\nslug: Sai Slug\n---\nthân\n", encoding="utf-8")
+
+    code = main(["ingest-policies", str(tmp_path), "--prune"])
+
+    assert code == 1
+    err = capsys.readouterr().err
+    assert "a-hong.md" in err and "b-hong.md" in err
+    assert prune_calls == []
+    assert policy_env.embedder.calls == []
+    assert policy_env.store.get_document_meta("khong-xoa") is not None
+
+
+def test_ingest_policies_prune_failure_exits_1_with_a_vietnamese_message_and_no_secrets(policy_env, tmp_path, capsys, monkeypatch):
+    from app.domains.policy.infrastructure.vectorstore.base import PolicyStoreError
+
+    def failing_prune(keep):
+        raise PolicyStoreError("kho vector Milvus báo lỗi khi xoá tài liệu cũ")
+
+    monkeypatch.setattr(policy_env.store, "delete_other_than", failing_prune)
+    _write_policy(tmp_path, "a.md", "tai-lieu-a")
+
+    code = main(["ingest-policies", str(tmp_path), "--prune"])
+
+    assert code == 1
+    captured = capsys.readouterr()
+    assert "Lỗi khi xoá tài liệu cũ" in captured.err
+    assert "Traceback" not in captured.err
+    assert "tai-lieu-a" in captured.out  # tài liệu tốt vẫn được nạp trước khi prune
+    assert policy_env.store.get_document_meta("tai-lieu-a") is not None
+    assert "khoa-gia-lap" not in captured.err and "khoa-gia-lap" not in captured.out
+
+
+def test_ingest_policies_prune_is_not_attempted_when_a_file_is_bad_even_if_prune_would_fail(policy_env, tmp_path, capsys, monkeypatch):
+    from app.domains.policy.infrastructure.vectorstore.base import PolicyStoreError
+
+    def failing_prune(keep):
+        raise PolicyStoreError("prune không được gọi")
+
+    monkeypatch.setattr(policy_env.store, "delete_other_than", failing_prune)
+    (tmp_path / "a-hong.md").write_text("không có front matter\n", encoding="utf-8")
+    _write_policy(tmp_path, "b.md", "tai-lieu-b")
+
+    code = main(["ingest-policies", str(tmp_path), "--prune"])
+
+    assert code == 1
+    err = capsys.readouterr().err
+    assert "--prune bị bỏ qua" in err
+    assert "prune không được gọi" not in err
+
+
+def test_ingest_policies_replace_document_failure_exits_1_keeps_going_and_skips_prune(policy_env, tmp_path, capsys, monkeypatch):
+    from app.domains.policy.infrastructure.vectorstore.base import PolicyStoreError
+
+    _seed_old(policy_env, "khong-xoa")
+    prune_calls = _forbid_prune(monkeypatch, policy_env.store)
+    real_replace = policy_env.store.replace_document
+
+    def flaky_replace(doc, model, chunks, vectors):
+        if doc.front.slug == "tai-lieu-a":
+            raise PolicyStoreError("kho vector Milvus báo lỗi khi ghi tài liệu")
+        return real_replace(doc, model, chunks, vectors)
+
+    monkeypatch.setattr(policy_env.store, "replace_document", flaky_replace)
+    _write_policy(tmp_path, "a.md", "tai-lieu-a")
+    _write_policy(tmp_path, "b.md", "tai-lieu-b")
+
+    code = main(["ingest-policies", str(tmp_path), "--prune"])
+
+    assert code == 1
+    captured = capsys.readouterr()
+    assert "a.md" in captured.err and "lỗi khi nạp" in captured.err
+    assert policy_env.store.get_document_meta("tai-lieu-b") is not None
+    assert policy_env.store.get_document_meta("tai-lieu-a") is None
+    assert prune_calls == []
+    assert policy_env.store.get_document_meta("khong-xoa") is not None
 
 
 def test_import_app_cli_does_not_import_gemini_sdk():
