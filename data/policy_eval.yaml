@@ -111,7 +111,7 @@
     - {slug: loai-tru-bao-hanh, section: "Lỗi không được bảo hành"}
     - {slug: xu-ly-be-mat, section: "Xử lý khuyết tật"}
 
-- question: "Chống thấm đã sửa theo bảo hành thì có phải thử ngâm nước lại không, và thử trong bao lâu?"
+- question: "Chống thấm đã sửa theo bảo hành thì có phải thử ngâm nước lại không, và việc thử ngâm nước thực hiện thế nào (mực nước cao bao nhiêu, đánh dấu ra sao)?"
   expect:
     - {slug: quy-trinh-xu-ly-khieu-nai-bao-hanh, section: "Khắc phục"}
     - {slug: thi-cong-chong-tham, section: "Thử ngâm nước"}

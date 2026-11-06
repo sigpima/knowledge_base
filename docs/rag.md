@@ -125,7 +125,7 @@ Mã thoát: 0 chạy xong; 2 thiếu khoá, Milvus không kết nối được h
 - **recall@1/3/5 mức tài liệu**: tỉ lệ câu có đoạn thuộc đúng `slug` trong k đoạn đầu. Câu hai nguồn chỉ trúng khi *mọi* `slug` mong đợi đều có mặt trong k đoạn đầu.
 - **recall@k mức mục**: như trên nhưng đoạn còn phải thuộc đúng mục `##` mong đợi. Thấp hơn mức tài liệu là bình thường: truy xuất tìm đúng tài liệu nhưng có thể chọn mục lân cận.
 - **MRR**: trung bình nghịch đảo hạng của đoạn đầu tiên thuộc `slug` mong đợi (câu hai nguồn: hạng nơi `slug` cuối cùng xuất hiện lần đầu; 0 nếu vắng trong top-k). Gần 1 nghĩa là đáp án thường đứng đầu.
-- **Câu trượt**: mọi câu không trúng ở hạng 1, kèm mong đợi và 3 đoạn thực tế (`slug › mục · điểm`) để xem truy xuất nhầm vào đâu.
+- **Câu trượt**: mọi câu không trúng ở hạng 1 (câu hai nguồn chỉ tính là trượt khi thiếu một `slug` mong đợi trong top-k), kèm mong đợi và 3 đoạn thực tế (`slug › mục · điểm`) để xem truy xuất nhầm vào đâu.
 
 Quy ước: nếu recall@5 mức tài liệu dưới 0,8 thì coi là chưa đạt và nên xem lại chất lượng cắt đoạn/tài liệu trước khi thêm cơ chế phức tạp hơn (hybrid, rerank); đó là việc của kế hoạch sau, không phải của bước này.
 
