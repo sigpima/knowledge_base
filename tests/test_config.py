@@ -58,3 +58,12 @@ def test_policy_rag_defaults(monkeypatch):
     settings = Settings(_env_file=None)
     assert settings.gemini_embedding_model == "gemini-embedding-001"
     assert settings.policy_min_score == 0.0
+
+
+def test_milvus_defaults(monkeypatch):
+    for name in ("MILVUS_URI", "MILVUS_TOKEN", "MILVUS_COLLECTION"):
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=None)
+    assert settings.milvus_uri == "http://127.0.0.1:19530"
+    assert settings.milvus_token == ""
+    assert settings.milvus_collection == "policy_chunks"

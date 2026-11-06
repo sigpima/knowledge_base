@@ -56,3 +56,30 @@ def db_session(db_engine):
         session.rollback()
         _truncate_all(session)
         session.close()
+
+
+POLICY_TEST_COLLECTION = "policy_chunks_test"
+
+
+@pytest.fixture
+def policy_client(tmp_path):
+    """Milvus Lite (file DB trong tiến trình, không cần Docker); bỏ qua test nếu nền tảng không chạy được."""
+    try:
+        from pymilvus import MilvusClient
+
+        client = MilvusClient(str(tmp_path / "policy.db"))
+    except Exception as exc:  # noqa: BLE001 - mọi lỗi khởi tạo Milvus Lite đều nghĩa là không dùng được
+        pytest.skip(f"Milvus Lite không dùng được trên nền tảng này ({type(exc).__name__})")
+    try:
+        yield client
+    finally:
+        client.close()
+
+
+@pytest.fixture
+def policy_store(policy_client):
+    from app.domains.policy.infrastructure.vectorstore.milvus_store import MilvusPolicyStore
+
+    store = MilvusPolicyStore(policy_client, POLICY_TEST_COLLECTION)
+    store.ensure_collection()
+    return store

@@ -1,3 +1,5 @@
 -r requirements-chat.txt
 httpx==0.28.1
 pytest==9.1.1
+# Milvus Lite (Milvus chạy trong tiến trình, file .db) cho test kho vector chính sách; pymilvus 3.x không tự kéo gói này (chỉ qua extra); kéo theo pyarrow và faiss-cpu.
+milvus-lite==3.2.2

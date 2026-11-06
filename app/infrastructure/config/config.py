@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     gemini_base_url: str = ""  # để trống = máy chủ Gemini mặc định
     gemini_embedding_model: str = "gemini-embedding-001"
     policy_min_score: float = 0.0  # ngưỡng điểm tối thiểu khi tìm tài liệu chính sách; 0 = không lọc
+    milvus_uri: str = "http://127.0.0.1:19530"  # máy chủ Milvus, hoặc đường dẫn file .db (Milvus Lite)
+    milvus_token: str = ""
+    milvus_collection: str = "policy_chunks"
     chat_log_dir: str = "chat_logs"
     # API chat cho website (SSE): bật/tắt bản demo, giới hạn câu hỏi/phiên và địa chỉ lắng nghe.
     chat_demo_enabled: bool = True
