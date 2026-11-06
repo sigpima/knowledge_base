@@ -238,7 +238,7 @@ def test_replace_rejects_oversized_fields_without_echoing_content(policy_store):
     assert "xxxx" not in str(caught.value)
 
 
-def test_replace_rejects_failed_insert_but_keeps_old_version(policy_store):
+def test_non_finite_vector_rejected_and_old_version_kept(policy_store):
     put(policy_store, count=1, prefix="cũ", vectors=[onehot(0)])
     bad = [float("nan")] + [0.0] * (EMBEDDING_DIM - 1)
     with pytest.raises(PolicyStoreError):
@@ -300,10 +300,10 @@ def test_read_only_store_can_search_but_not_write(policy_client, policy_store):
     assert policy_store.get_document_meta("a") is not None
 
 
-def test_read_only_store_on_empty_database_is_unavailable_and_creates_nothing(tmp_path):
+def test_read_only_store_on_empty_database_is_unavailable_and_creates_nothing(policy_lite_dir):
     from pymilvus import MilvusClient
 
-    client = MilvusClient(str(tmp_path / "empty.db"))
+    client = MilvusClient(str(policy_lite_dir / "empty.db"))
     try:
         store = MilvusPolicyStore(client, "chua_co", read_only=True)
         with pytest.raises(PolicyStoreUnavailableError):
@@ -315,15 +315,15 @@ def test_read_only_store_on_empty_database_is_unavailable_and_creates_nothing(tm
         client.close()
 
 
-def test_build_milvus_store_read_only_does_not_create_collection(tmp_path):
-    path = str(tmp_path / "built.db")
+def test_build_milvus_store_read_only_does_not_create_collection(policy_lite_dir):
+    path = str(policy_lite_dir / "built.db")
     store = build_milvus_store(path, "", "chua_co", read_only=True)
     with pytest.raises(PolicyStoreUnavailableError):
         store.search(onehot(0), MODEL, top_k=3, doc_type=None)
 
 
-def test_build_milvus_store_writable_round_trip(tmp_path):
-    store = build_milvus_store(str(tmp_path / "built.db"), "", "chinh_sach")
+def test_build_milvus_store_writable_round_trip(policy_lite_dir):
+    store = build_milvus_store(str(policy_lite_dir / "built.db"), "", "chinh_sach")
     store.ensure_collection()
     put(store, count=1, vectors=[onehot(0)])
     assert texts(store.search(onehot(0), MODEL, top_k=3, doc_type=None)) == ["đoạn 0"]

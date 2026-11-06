@@ -62,14 +62,28 @@ POLICY_TEST_COLLECTION = "policy_chunks_test"
 
 
 @pytest.fixture
-def policy_client(tmp_path):
-    """Milvus Lite (file DB trong tiến trình, không cần Docker); bỏ qua test nếu nền tảng không chạy được."""
+def policy_lite_dir(tmp_path):
+    """Thư mục tạm cho file DB Milvus Lite (chạy trong tiến trình, không cần Docker).
+
+    Thử khởi tạo Milvus Lite một lần; bỏ qua test nếu nền tảng không chạy được.
+    Mọi test dùng file `.db` trên đĩa phải đi qua fixture này (trực tiếp hoặc qua `policy_client`).
+    """
+    directory = tmp_path / "lite"
+    directory.mkdir()
     try:
         from pymilvus import MilvusClient
 
-        client = MilvusClient(str(tmp_path / "policy.db"))
+        MilvusClient(str(directory / "probe.db")).close()
     except Exception as exc:  # noqa: BLE001 - mọi lỗi khởi tạo Milvus Lite đều nghĩa là không dùng được
         pytest.skip(f"Milvus Lite không dùng được trên nền tảng này ({type(exc).__name__})")
+    return directory
+
+
+@pytest.fixture
+def policy_client(policy_lite_dir):
+    from pymilvus import MilvusClient
+
+    client = MilvusClient(str(policy_lite_dir / "policy.db"))
     try:
         yield client
     finally:
