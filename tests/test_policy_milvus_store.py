@@ -300,6 +300,42 @@ def test_read_only_store_can_search_but_not_write(policy_client, policy_store):
     assert policy_store.get_document_meta("a") is not None
 
 
+def test_has_other_model_rows_detects_rows_from_another_model(policy_store):
+    put(policy_store, count=1, vectors=[onehot(0)])
+
+    assert policy_store.has_other_model_rows("model-b") is True
+    assert policy_store.has_other_model_rows(MODEL) is False
+
+
+def test_has_other_model_rows_is_false_on_an_empty_store(policy_store):
+    policy_store.ensure_collection()
+
+    assert policy_store.has_other_model_rows(MODEL) is False
+
+
+def test_has_other_model_rows_works_read_only_and_validates_the_model(policy_client, policy_store):
+    put(policy_store, count=1, vectors=[onehot(0)])
+    read_only = MilvusPolicyStore(policy_client, POLICY_TEST_COLLECTION, read_only=True)
+
+    assert read_only.has_other_model_rows("model-b") is True
+    for model in ['m"', 'm" or embedding_model != "', ""]:
+        with pytest.raises(PolicyStoreError):
+            read_only.has_other_model_rows(model)
+
+
+def test_has_other_model_rows_on_missing_collection_is_unavailable(policy_lite_dir):
+    from pymilvus import MilvusClient
+
+    client = MilvusClient(str(policy_lite_dir / "empty2.db"))
+    try:
+        store = MilvusPolicyStore(client, "chua_co", read_only=True)
+        with pytest.raises(PolicyStoreUnavailableError):
+            store.has_other_model_rows(MODEL)
+        assert client.list_collections() == []
+    finally:
+        client.close()
+
+
 def test_read_only_store_on_empty_database_is_unavailable_and_creates_nothing(policy_lite_dir):
     from pymilvus import MilvusClient
 

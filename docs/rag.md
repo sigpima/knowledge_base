@@ -76,7 +76,8 @@ Khắc phục: sửa nguyên nhân (ví dụ đặt `GEMINI_API_KEY` trong `.env
 | `POLICY_MIN_SCORE` | `0.0` | đoạn có `score` thấp hơn bị bỏ khỏi kết quả; `0.0` là không lọc |
 
 - **Vector gắn với model.** Mỗi dòng lưu tên model đã nhúng và truy vấn chỉ tìm trong các dòng cùng model với embedder đang dùng. Đổi `GEMINI_EMBEDDING_MODEL`
-  thì phải chạy lại `ingest-policies` (với compose: `docker compose --profile rag up policy-seed`), và đặt cùng giá trị cho `mcp`; nếu quên, `search_policies` trả `passages` rỗng.
+  thì phải chạy lại `ingest-policies` (với compose: `docker compose --profile rag up policy-seed`), và đặt cùng giá trị cho `mcp`. Nếu quên, truy vấn không có hit nào
+  cho model hiện tại trong khi kho còn dòng của model khác, và `search_policies` trả `{"error": "Kho chính sách được nạp bằng model embedding khác ..."}` (không nêu tên model) thay vì `passages` rỗng; kho trống hoặc không có đoạn nào đủ điểm vẫn trả `passages` rỗng, không lỗi.
 - **`POLICY_MIN_SCORE` chưa được hiệu chỉnh.** Mặc định 0.0 (không ngưỡng). Chưa có số đo trên model embedding thật vì lúc phát triển không có khoá Gemini; ngưỡng phù hợp
   cần đo bằng kịch bản đánh giá (xem mục "Đánh giá truy xuất" bên dưới; chưa chạy trên model thật). Trước đó, bot dựa vào chỉ dẫn "kết quả không liên quan thì nói chưa tìm thấy" chứ không dựa vào ngưỡng điểm.
 

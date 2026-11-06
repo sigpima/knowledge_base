@@ -37,6 +37,9 @@ def test_policy_service_builds_a_read_only_store_lazily(monkeypatch):
         def search(self, vector, model, top_k, doc_type):
             return []
 
+        def has_other_model_rows(self, model):
+            return False
+
     store_calls = []
 
     def fake_build_store(*args, **kwargs):

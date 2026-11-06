@@ -471,7 +471,8 @@ def search_policies(query: str, top_k: int = 5, doc_type: Optional[str] = None) 
     (row_count = 0) nghĩa là kho chính sách không có nội dung phù hợp với
     câu hỏi: hãy nói rõ là chưa tìm thấy quy định liên quan, đừng đoán hay
     bịa quy định. Nếu có lỗi, kết quả chỉ có error (tiếng Việt, vd kho
-    chính sách chưa được nạp hoặc chưa cấu hình khoá Gemini) -- chuyển
+    chính sách chưa được nạp, chưa cấu hình khoá Gemini, hoặc kho được nạp bằng
+    model embedding khác cần nạp lại) -- chuyển
     thông báo đó cho người dùng thay vì tự suy diễn nội dung chính sách."""
     return policy_search_service.search(query, top_k=top_k, doc_type=doc_type)
 

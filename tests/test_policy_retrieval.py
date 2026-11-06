@@ -29,18 +29,29 @@ class SpyStore:
     def __init__(self, inner):
         self.inner = inner
         self.searches: list[tuple[int, str | None]] = []
+        self.other_model_checks: list[str] = []
 
     def search(self, vector, model, top_k, doc_type):
         self.searches.append((top_k, doc_type))
         return self.inner.search(vector, model, top_k, doc_type)
 
+    def has_other_model_rows(self, model):
+        self.other_model_checks.append(model)
+        return self.inner.has_other_model_rows(model)
+
 
 class FixedStore:
-    def __init__(self, passages):
+    def __init__(self, passages, other_model_rows=False):
         self.passages = passages
+        self.other_model_rows = other_model_rows
+        self.other_model_checks: list[str] = []
 
     def search(self, vector, model, top_k, doc_type):
         return list(self.passages)
+
+    def has_other_model_rows(self, model):
+        self.other_model_checks.append(model)
+        return self.other_model_rows
 
 
 class FailingStore:
@@ -48,6 +59,9 @@ class FailingStore:
         self.error = error
 
     def search(self, vector, model, top_k, doc_type):
+        raise self.error
+
+    def has_other_model_rows(self, model):
         raise self.error
 
 
@@ -205,6 +219,56 @@ def test_empty_store_result_is_empty_passages_not_an_error():
     service = PolicySearchService(lambda: FixedStore([]), HashingEmbedder)
 
     assert service.search("câu hỏi") == {"passages": [], "row_count": 0}
+
+
+class OtherModelEmbedder(HashingEmbedder):
+    model = "hashing-other-model"
+
+
+def test_store_loaded_with_another_model_is_an_error_not_an_empty_result(loaded):
+    store, _ = loaded
+    embedder = OtherModelEmbedder()
+    service = PolicySearchService(lambda: store, lambda: embedder)
+
+    result = service.search("thử ngâm nước 48 giờ")
+
+    assert set(result) == {"error"}
+    assert "embedding" in result["error"] and "ingest-policies" in result["error"]
+    assert "hashing" not in result["error"]
+    assert len(embedder.calls) == 1
+
+
+def test_same_model_with_unreachable_min_score_is_empty_without_error(loaded):
+    service, spy, _ = make_service(loaded, min_score=1.01)
+
+    assert service.search("thử ngâm nước 48 giờ") == {"passages": [], "row_count": 0}
+    assert spy.other_model_checks == []  # có hit thô nên không cần kiểm tra model khác
+
+
+def test_empty_real_store_is_empty_without_error(policy_store):
+    policy_store.ensure_collection()
+    service = PolicySearchService(lambda: policy_store, HashingEmbedder)
+
+    assert service.search("câu hỏi") == {"passages": [], "row_count": 0}
+
+
+def test_other_model_check_failure_becomes_a_store_error():
+    store = FixedStore([])
+    store.has_other_model_rows = lambda model: (_ for _ in ()).throw(_leaky(PolicyStoreUnavailableError))
+    service = PolicySearchService(lambda: store, HashingEmbedder)
+
+    result = service.search("câu hỏi")
+
+    assert set(result) == {"error"} and "chưa được nạp hoặc không kết nối được" in result["error"]
+    assert not any(secret in result["error"] for secret in SECRETS)
+
+
+def test_fixed_store_with_other_model_rows_reports_drift():
+    store = FixedStore([], other_model_rows=True)
+    service = PolicySearchService(lambda: store, HashingEmbedder)
+
+    assert "ingest-policies" in service.search("câu hỏi")["error"]
+    assert store.other_model_checks == [HashingEmbedder.model]
 
 
 def _leaky(error_type):

@@ -24,6 +24,10 @@ _ERR_NOT_CONFIGURED = "Chưa cấu hình khoá Gemini (GEMINI_API_KEY) nên khô
 _ERR_EMBEDDING = "Không tạo được embedding cho câu hỏi lúc này. Hãy thử lại sau."
 _ERR_STORE_UNAVAILABLE = "Kho chính sách chưa được nạp hoặc không kết nối được."
 _ERR_STORE = "Kho chính sách báo lỗi khi tìm kiếm. Hãy thử lại sau."
+_ERR_MODEL_DRIFT = (
+    "Kho chính sách được nạp bằng model embedding khác với model đang dùng để tìm kiếm, nên không tìm được đoạn nào. "
+    "Cần chạy lại ingest-policies (nạp lại tài liệu) với đúng model đang cấu hình."
+)
 _ERR_UNEXPECTED = "Tìm kiếm chính sách gặp lỗi không mong đợi."
 
 
@@ -63,7 +67,12 @@ class PolicySearchService:
         try:
             embedder = self._get_embedder()
             vector = embedder.embed_query(text)
-            passages = self._get_store().search(vector, embedder.model, top_k, doc_type)
+            store = self._get_store()
+            passages = store.search(vector, embedder.model, top_k, doc_type)
+            # Không có hit nào: phân biệt "kho nạp bằng model khác" (lỗi cấu hình) với "không có đáp án" (kết quả rỗng).
+            if not passages and store.has_other_model_rows(embedder.model):
+                logger.warning("Kho chính sách chỉ có dòng nhúng bằng model khác model đang dùng để tìm kiếm")
+                return {"error": _ERR_MODEL_DRIFT}
         except EmbeddingNotConfiguredError:
             logger.warning("Chưa cấu hình embedding cho search_policies", exc_info=True)
             return {"error": _ERR_NOT_CONFIGURED}

@@ -36,3 +36,7 @@ class PolicyStore(Protocol):
     def search(self, vector: list[float], model: str, top_k: int, doc_type: str | None) -> list[PolicyPassage]:
         """Giảm dần theo điểm cosine; chỉ xét chunk có `embedding_model == model`."""
         ...
+
+    def has_other_model_rows(self, model: str) -> bool:
+        """`True` nếu kho có ít nhất một chunk nhúng bằng model khác `model` (phân biệt "lệch model" với "không có đáp án")."""
+        ...

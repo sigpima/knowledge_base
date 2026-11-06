@@ -274,6 +274,19 @@ class MilvusPolicyStore:
         ]
         return sorted(passages, key=lambda passage: passage.score, reverse=True)
 
+    def has_other_model_rows(self, model: str) -> bool:
+        _check_model(model)
+        with self._guard("kiểm tra model embedding"):
+            client = self._conn()
+            self._require_collection(client)
+            rows = client.query(
+                self._collection,
+                filter=f"embedding_model != {_quote(model)}",
+                output_fields=["slug"],
+                limit=1,
+            )
+            return bool(rows)
+
 
 def _looks_unavailable(exc: BaseException) -> bool:
     if isinstance(exc, (grpc.RpcError, OSError)):
