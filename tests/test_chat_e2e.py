@@ -124,7 +124,7 @@ def test_sdk_runs_the_real_mcp_tool_and_the_answer_uses_its_result(mcp_url, fake
     assert reply.tool_calls == [{"tool": "run_readonly_sql", "args": {"query": QUERY}}]
     assert len(fake.bodies) == 2
     assert "tiếng Việt" in json.dumps(fake.bodies[0], ensure_ascii=False)  # system instruction đã được gửi
-    assert len(tool_names) == 10 and "compare_work_item_price" in tool_names
+    assert len(tool_names) == 11 and "compare_work_item_price" in tool_names
 
 
 def test_main_runs_a_whole_terminal_session(mcp_url, fake_gemini, monkeypatch, capsys, tmp_path):

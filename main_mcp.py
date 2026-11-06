@@ -6,6 +6,7 @@ from mcp.server.mcpserver import MCPServer
 from sqlalchemy import text as sql_text
 
 from app.core.services.knowledge_service import KnowledgeService
+from app.domains.policy.application.services.retrieval import PolicySearchService
 from app.domains.quotation.application.dto import EstimationData, EstimationWorkItemData
 from app.infrastructure.config.config import settings
 from app.infrastructure.database.postgres.readonly_session import ReadonlySessionLocal
@@ -15,6 +16,28 @@ mcp = MCPServer("knowledge-base")
 # Chỉ kết nối bằng role Postgres chỉ đọc: server MCP không bao giờ ghi DB.
 knowledge_service = KnowledgeService(session_factory=ReadonlySessionLocal)
 RUN_SQL_MAX_ROWS = 200
+
+
+def _build_policy_store():
+    # Import muộn: không kéo pymilvus vào lúc khởi động MCP; kho mở ở chế độ chỉ đọc (bảo đảm ở tầng mã).
+    from app.domains.policy.infrastructure.vectorstore.milvus_store import build_milvus_store
+
+    return build_milvus_store(settings.milvus_uri, settings.milvus_token, settings.milvus_collection, read_only=True)
+
+
+def _build_policy_embedder():
+    # Import muộn: `google-genai` chỉ có trong requirements-chat.txt; thiếu khoá/gói chỉ làm tool này báo lỗi.
+    from app.domains.policy.infrastructure.embedding.gemini import build_embedder
+
+    return build_embedder(settings.gemini_api_key, settings.gemini_embedding_model, settings.gemini_base_url)
+
+
+def _new_policy_search_service() -> PolicySearchService:
+    return PolicySearchService(_build_policy_store, _build_policy_embedder, min_score=settings.policy_min_score)
+
+
+# Dựng lười: Milvus và khoá Gemini chỉ cần khi có người gọi search_policies.
+policy_search_service = _new_policy_search_service()
 
 
 def _decimal_to_str(value: Decimal | None) -> str | None:
@@ -423,6 +446,34 @@ def compare_labor_cost(project_id: int) -> Dict[str, Any] | None:
         matched["cost_diff"] = _decimal_to_str(matched["cost_diff"])
         matched["cost_diff_pct"] = _decimal_to_str(matched["cost_diff_pct"])
     return result
+
+
+### POLICY TOOL ###
+
+
+@mcp.tool()
+def search_policies(query: str, top_k: int = 5, doc_type: Optional[str] = None) -> Dict[str, Any]:
+    """Tìm trong kho tài liệu chính sách/quy trình của công ty (tìm theo ngữ
+    nghĩa) những đoạn liên quan đến câu hỏi. DÙNG cho câu hỏi về quy trình
+    thi công, định mức (hao hụt, số lớp, nhân công), điều kiện thi công và
+    an toàn, bảo hành (thời hạn, loại trừ, xử lý khiếu nại) và nghiệm thu.
+    KHÔNG dùng để lấy đơn giá, số lượng hay tổng tiền của báo giá/dự toán --
+    những con số đó chỉ có ở các tool báo giá/dự toán và run_readonly_sql.
+    query là câu hỏi viết tự nhiên bằng tiếng Việt (tối đa 500 ký tự).
+    top_k là số đoạn tối đa muốn lấy (mặc định 5, tự kẹp trong 1-8). doc_type
+    tuỳ chọn: "technical" (quy trình/định mức/điều kiện thi công) hoặc
+    "warranty" (bảo hành); bỏ trống để tìm trên cả hai loại. Trả về passages
+    -- danh sách các đoạn xếp theo độ liên quan giảm dần, mỗi đoạn gồm slug
+    và title (tài liệu), doc_type, section (đường dẫn mục trong tài liệu),
+    text (nguyên văn đoạn) và score (độ tương đồng cosine, càng cao càng
+    liên quan) -- cùng row_count. Khi trả lời, chỉ dựa vào nội dung trong
+    text và LUÔN trích dẫn nguồn dạng [slug › section]. passages rỗng
+    (row_count = 0) nghĩa là kho chính sách không có nội dung phù hợp với
+    câu hỏi: hãy nói rõ là chưa tìm thấy quy định liên quan, đừng đoán hay
+    bịa quy định. Nếu có lỗi, kết quả chỉ có error (tiếng Việt, vd kho
+    chính sách chưa được nạp hoặc chưa cấu hình khoá Gemini) -- chuyển
+    thông báo đó cho người dùng thay vì tự suy diễn nội dung chính sách."""
+    return policy_search_service.search(query, top_k=top_k, doc_type=doc_type)
 
 
 ### BACKUP TOOL ###

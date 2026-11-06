@@ -14,7 +14,7 @@ WATERPROOF = "Chống thấm sân thượng"
 EXPECTED_TOOLS = {
     "get_quotation", "find_quotations", "get_work_item", "search_work_items", "compare_work_item_price",
     "compare_work_item_detail", "get_project_overview", "compare_labor_cost",
-    "compare_project_cost_breakdown", "run_readonly_sql",
+    "compare_project_cost_breakdown", "run_readonly_sql", "search_policies",
 }
 
 
@@ -45,10 +45,10 @@ def _item_id(project_name: str, item_name: str) -> int:
     )
 
 
-def test_server_registers_exactly_ten_tools():
+def test_server_registers_exactly_eleven_tools():
     tools = asyncio.run(main_mcp.mcp.list_tools())
 
-    assert {tool.name for tool in tools} == EXPECTED_TOOLS and len(tools) == 10
+    assert {tool.name for tool in tools} == EXPECTED_TOOLS and len(tools) == 11
 
 
 def test_get_project_overview_handles_project_without_estimation(seeded):

@@ -14,8 +14,8 @@ công trình A cao hơn công trình B?"* kèm số liệu cụ thể.
   thi công, điều khoản, phát sinh) và *dự toán* (hạng mục đó được cấu thành từ vật tư, nhân công, lợi nhuận ra sao).
 - **Đường nhập dữ liệu có kiểm tra**: mỗi công trình là một file YAML ([định dạng](docs/data-format.md)); lỗi báo kèm vị
   trí trong file, ghi vào DB trong một transaction (hoặc ghi đủ, hoặc không ghi gì).
-- **MCP server với 10 tool chỉ đọc**: so sánh đơn giá, giải thích chênh lệch vật tư/nhân công, so sánh tỷ trọng chi
-  phí, tìm báo giá, cộng một tool SQL `SELECT` cho những câu hỏi tool có cấu trúc chưa phủ tới.
+- **MCP server với 11 tool chỉ đọc**: so sánh đơn giá, giải thích chênh lệch vật tư/nhân công, so sánh tỷ trọng chi
+  phí, tìm báo giá, tra cứu tài liệu chính sách (`search_policies`), cộng một tool SQL `SELECT` cho những câu hỏi tool có cấu trúc chưa phủ tới.
 
 ## Vì sao có ích
 
@@ -32,6 +32,7 @@ rác ở nhiều sheet (báo giá, định mức vật tư, bảng nhân công) 
 | Nhân công chiếm bao nhiêu % tổng báo giá, so với công trình khác? | `compare_project_cost_breakdown` |
 | Chi phí thuê thợ ngoài so với công trình tương tự? | `compare_labor_cost` |
 | Tóm tắt một công trình; báo giá mới nhất/cao nhất; tìm hạng mục theo tên hay tag | `get_project_overview`, `find_quotations`, `get_quotation`, `get_work_item`, `search_work_items` |
+| Quy trình thi công, định mức, bảo hành, nghiệm thu theo tài liệu chính sách (tuỳ chọn, cần Milvus và khoá Gemini) | `search_policies` |
 | Mọi thứ còn lại (chỉ `SELECT`, giới hạn số dòng) | `run_readonly_sql` |
 
 Xem [4 ví dụ hỏi đáp thật](#ví-dụ-hỏi-đáp-thật) bên dưới.
@@ -41,7 +42,7 @@ Xem [4 ví dụ hỏi đáp thật](#ví-dụ-hỏi-đáp-thật) bên dưới.
 ```mermaid
 flowchart LR
     Y["data/sample/*.yaml<br/>(mỗi file = 1 công trình)"] -->|"kiểm tra + ghi 1 transaction"| P[("Postgres<br/>schema quotation")]
-    P -->|"role chỉ đọc"| M["MCP server :8002<br/>10 tool"]
+    P -->|"role chỉ đọc"| M["MCP server :8002<br/>11 tool"]
     M --> A["Claude / Codex / agent khác"]
     I["API ingest :8000<br/>POST /ingest"] -->|"quyền ghi"| P
 ```
@@ -91,7 +92,7 @@ Rồi hỏi bằng tiếng Việt, ví dụ: *"Vì sao đơn giá chống thấm
 
 ## Chat ngay trong terminal (Gemini)
 
-Không có sẵn Claude/Codex? Dự án có một bot hỏi đáp chạy trong terminal, dùng Gemini làm mô hình và tự gọi 10 tool MCP ở trên.
+Không có sẵn Claude/Codex? Dự án có một bot hỏi đáp chạy trong terminal, dùng Gemini làm mô hình và tự gọi 11 tool MCP ở trên.
 Phần này **tuỳ chọn**: chỉ bot cần khoá API, mọi thứ còn lại chạy không cần khoá.
 
 ```bash
@@ -217,7 +218,7 @@ app/domains/quotation/            domain duy nhất: domain/ → application/ �
   application/services/           các bộ so sánh: đơn giá, chi tiết dự toán, nhân công, cơ cấu chi phí
 app/core/services/                lớp truy vấn đọc mà MCP dùng
 app/interfaces/http/api.py        service ingest (FastAPI): /health, /ingest, /work-items/{id}
-main_mcp.py                       MCP server (10 tool, role Postgres chỉ đọc)
+main_mcp.py                       MCP server (11 tool, role Postgres chỉ đọc)
 scripts/                          sinh dữ liệu, seed, init DB, smoke test, client MCP tối giản
 data/sample/                      24 file YAML giả
 ```

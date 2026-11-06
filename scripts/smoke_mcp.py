@@ -3,13 +3,13 @@
     python3 -m scripts.smoke_mcp [URL]        # mặc định http://127.0.0.1:8002/mcp
 
 Làm đúng chuỗi một agent làm: initialize -> tools/list -> gọi thử run_readonly_sql.
-Thoát mã 0 nếu thấy đủ 10 tool và đếm được công trình trong DB.
+Thoát mã 0 nếu thấy đủ 11 tool và đếm được công trình trong DB.
 """
 import sys
 
 from scripts.mcp_client import DEFAULT_URL, McpError, McpSession
 
-EXPECTED_TOOL_COUNT = 10
+EXPECTED_TOOL_COUNT = 11
 
 
 def main(url: str) -> int:

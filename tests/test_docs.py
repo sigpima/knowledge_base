@@ -8,11 +8,11 @@ README = (ROOT / "README.md").read_text(encoding="utf-8")
 TOOLS = [
     "get_quotation", "find_quotations", "get_work_item", "search_work_items", "compare_work_item_price",
     "compare_work_item_detail", "get_project_overview", "compare_labor_cost",
-    "compare_project_cost_breakdown", "run_readonly_sql",
+    "compare_project_cost_breakdown", "run_readonly_sql", "search_policies",
 ]
 
 
-def test_readme_mentions_all_ten_tools():
+def test_readme_mentions_all_eleven_tools():
     assert [tool for tool in TOOLS if tool not in README] == []
 
 
