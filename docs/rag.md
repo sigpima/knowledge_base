@@ -78,7 +78,7 @@ Khắc phục: sửa nguyên nhân (ví dụ đặt `GEMINI_API_KEY` trong `.env
 - **Vector gắn với model.** Mỗi dòng lưu tên model đã nhúng và truy vấn chỉ tìm trong các dòng cùng model với embedder đang dùng. Đổi `GEMINI_EMBEDDING_MODEL`
   thì phải chạy lại `ingest-policies` (với compose: `docker compose --profile rag up policy-seed`), và đặt cùng giá trị cho `mcp`; nếu quên, `search_policies` trả `passages` rỗng.
 - **`POLICY_MIN_SCORE` chưa được hiệu chỉnh.** Mặc định 0.0 (không ngưỡng). Chưa có số đo trên model embedding thật vì lúc phát triển không có khoá Gemini; ngưỡng phù hợp
-  cần đo bằng kịch bản đánh giá (sẽ thêm ở bước sau). Trước đó, bot dựa vào chỉ dẫn "kết quả không liên quan thì nói chưa tìm thấy" chứ không dựa vào ngưỡng điểm.
+  cần đo bằng kịch bản đánh giá (xem mục "Đánh giá truy xuất" bên dưới; chưa chạy trên model thật). Trước đó, bot dựa vào chỉ dẫn "kết quả không liên quan thì nói chưa tìm thấy" chứ không dựa vào ngưỡng điểm.
 
 ## Thêm một tài liệu chính sách
 
@@ -99,6 +99,41 @@ Khắc phục: sửa nguyên nhân (ví dụ đặt `GEMINI_API_KEY` trong `.env
    Khoá lạ trong front matter bị từ chối. File sai front matter hoặc trùng `slug` được báo trên stderr, mã thoát 1 và `--prune` không chạy.
 
 Dữ liệu trong `data/policies/` là giả lập; đừng đưa quy định, thương hiệu hay tiêu chuẩn thật vào repo công khai.
+
+## Đánh giá truy xuất
+
+**Trạng thái: bộ đánh giá đã có nhưng CHƯA được chạy với model embedding thật** (lúc phát triển không có khoá Gemini). Vì vậy chưa có số recall/MRR nào
+cho kho này, và `POLICY_MIN_SCORE` vẫn là `0.0` (chưa hiệu chỉnh). Test tự động chỉ chứng minh đường ống đúng (embedder băm không có ngữ nghĩa), không chứng minh
+chất lượng truy xuất.
+
+**Bộ câu hỏi** `data/policy_eval.yaml` gồm 28 câu tiếng Việt tự nhiên (cố ý không chép tiêu đề mục để đo khớp ngữ nghĩa chứ không khớp chữ): 20 câu một nguồn (mỗi tài liệu
+trong 12 tài liệu ít nhất một câu), 4 câu cần hai tài liệu, 4 câu ngoài phạm vi (`expect: null`, kho không có đáp án). Mỗi câu ghi `slug` và tiêu đề `##` chứa đáp án;
+`tests/test_policy_eval_set.py` kiểm tra mọi `slug`/mục đều có thật trong `data/policies/`. Câu nào có đáp án đáng bàn đều có chú thích ngay trong file.
+
+**Cách chạy** (cần khoá Gemini và Milvus đã nạp tài liệu; kịch bản chỉ đọc kho, mở ở chế độ chỉ đọc và đặt ngưỡng điểm 0 để điểm không bị lọc):
+
+```bash
+export GEMINI_API_KEY=...
+python -m app.cli ingest-policies data/policies --prune     # nạp trước (cần MILVUS_URI nếu không dùng mặc định)
+python -m scripts.eval_retrieval [--top-k 5] [--eval data/policy_eval.yaml]
+```
+
+Mã thoát: 0 chạy xong; 2 thiếu khoá, Milvus không kết nối được hoặc chưa nạp (không câu nào nhận được đoạn), hoặc file câu hỏi sai cấu trúc.
+
+**Các số đo** (đều tính trên câu trong phạm vi, xét `top-k` đoạn đầu của mỗi câu):
+
+- **recall@1/3/5 mức tài liệu**: tỉ lệ câu có đoạn thuộc đúng `slug` trong k đoạn đầu. Câu hai nguồn chỉ trúng khi *mọi* `slug` mong đợi đều có mặt trong k đoạn đầu.
+- **recall@k mức mục**: như trên nhưng đoạn còn phải thuộc đúng mục `##` mong đợi. Thấp hơn mức tài liệu là bình thường: truy xuất tìm đúng tài liệu nhưng có thể chọn mục lân cận.
+- **MRR**: trung bình nghịch đảo hạng của đoạn đầu tiên thuộc `slug` mong đợi (câu hai nguồn: hạng nơi `slug` cuối cùng xuất hiện lần đầu; 0 nếu vắng trong top-k). Gần 1 nghĩa là đáp án thường đứng đầu.
+- **Câu trượt**: mọi câu không trúng ở hạng 1, kèm mong đợi và 3 đoạn thực tế (`slug › mục · điểm`) để xem truy xuất nhầm vào đâu.
+
+Quy ước: nếu recall@5 mức tài liệu dưới 0,8 thì coi là chưa đạt và nên xem lại chất lượng cắt đoạn/tài liệu trước khi thêm cơ chế phức tạp hơn (hybrid, rerank); đó là việc của kế hoạch sau, không phải của bước này.
+
+**Chọn `POLICY_MIN_SCORE` từ điểm in ra.** Kịch bản in điểm của đoạn hạng 1: thấp nhất và trung vị của câu *trong* phạm vi, cao nhất và trung vị của câu *ngoài* phạm vi.
+
+- Nếu điểm cao nhất ngoài phạm vi **thấp hơn** điểm thấp nhất trong phạm vi, hai nhóm tách được; kịch bản gợi ý trung điểm làm `POLICY_MIN_SCORE`. Đặt giá trị đó cho `mcp` (cùng biến môi trường) rồi chạy lại để xem câu ngoài phạm vi trả `passages` rỗng.
+- Nếu hai nhóm **chồng lấn**, kịch bản không đưa ra số: mọi ngưỡng sẽ cắt nhầm câu đúng hoặc để lọt câu ngoài phạm vi. Hãy để `0.0` và dựa vào chỉ dẫn của bot ("kết quả không liên quan thì nói chưa tìm thấy").
+- Chỉ 4 câu ngoài phạm vi và 24 câu trong phạm vi là mẫu nhỏ; điểm cao nhất/thấp nhất là số cực trị nên nhạy với từng câu. Coi gợi ý là điểm khởi đầu, đừng coi là ngưỡng đã kiểm chứng. Đổi model embedding thì phải đo lại, vì thang điểm khác nhau.
 
 ## Giới hạn và bảo mật (nói thẳng)
 

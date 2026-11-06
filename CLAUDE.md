@@ -22,6 +22,7 @@ python main_chat.py                       # API chat cho web (SSE, cổng 8003; 
 GEMINI_API_KEY=... docker compose --profile chat up -d   # thêm service `chat` (127.0.0.1:8003); `docker compose up` thường không bật nó
 GEMINI_API_KEY=... docker compose --profile rag up -d    # RAG chính sách: thêm `milvus` + `policy-seed` (nạp data/policies); ghép được với --profile chat
 python -m app.cli ingest-policies data/policies --prune   # nạp tài liệu chính sách vào Milvus (cần MILVUS_URI, GEMINI_API_KEY); mã thoát 0/1/2
+python -m scripts.eval_retrieval [--top-k 5]   # đo recall/MRR truy xuất chính sách bằng data/policy_eval.yaml (cần GEMINI_API_KEY + Milvus đã nạp); mã thoát 0/2
 ```
 
 Test (Postgres thật, bắt buộc đặt biến môi trường, không có giá trị mặc định):
@@ -50,6 +51,7 @@ trên DB nào đó, hoặc `CREATE ROLE knowledge_base_ro LOGIN PASSWORD '...'`)
 - `main_mcp.py` – MCP server (streamable-http, cổng 8002), đúng 11 tool, kết nối bằng role Postgres **chỉ đọc**.
 - `scripts/` – sinh dữ liệu mẫu, seed, init DB, smoke test, client MCP tối giản.
 - `data/sample/` – 24 file YAML giả (được commit; phải khớp đầu ra của bộ sinh – có test).
+- `data/policy_eval.yaml` + `scripts/eval_retrieval.py` – bộ 28 câu hỏi đánh giá truy xuất chính sách và kịch bản đo (chưa chạy với model embedding thật; xem docs/rag.md).
 - `data/policies/` – 12 tài liệu chính sách giả (Markdown + front matter), nguồn của RAG.
 
 ## Quy ước

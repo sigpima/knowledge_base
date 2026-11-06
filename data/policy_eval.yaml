@@ -1,0 +1,140 @@
+# Bộ câu hỏi đánh giá truy xuất cho `search_policies` (đọc bởi `python -m scripts.eval_retrieval`).
+#
+# Mỗi phần tử là một mapping có đúng hai khoá:
+#   question: câu hỏi bằng tiếng Việt tự nhiên, như khách hàng, chỉ huy trưởng hoặc nhân viên kinh doanh hay hỏi.
+#             Cố ý KHÔNG chép nguyên tiêu đề mục để phép đo phản ánh khả năng khớp ngữ nghĩa chứ không phải khớp chữ.
+#   expect:   câu trả lời nằm ở đâu trong data/policies/, một trong ba dạng:
+#     {slug: <slug>, section: <tiêu đề ## chính xác>}      câu một nguồn
+#     [ {slug, section}, {slug, section} ]                 câu cần hai tài liệu khác nhau (đủ cả hai mới tính là trúng)
+#     null                                                 câu NGOÀI phạm vi: kho không có câu trả lời, truy xuất lý ra
+#                                                          phải cho điểm thấp (dùng để chọn POLICY_MIN_SCORE)
+#
+# Cơ cấu: 20 câu một nguồn (mỗi tài liệu trong 12 tài liệu ít nhất một câu), 4 câu hai nguồn, 4 câu ngoài phạm vi.
+# `section` phải trùng khít một tiêu đề `##` của tài liệu đó; tests/test_policy_eval_set.py kiểm tra điều này.
+# Câu nào có đáp án đáng bàn (hai tài liệu cùng nhắc tới) đều có chú thích `# Đáng bàn:` ngay trên câu đó.
+#
+# Dữ liệu giả lập, không chứa quy định hay thương hiệu thật.
+
+# ---------------------------------------------------------------- câu một nguồn
+
+# chinh-sach-bao-hanh (3)
+- question: "Bảo hành chống thấm hệ cao cấp được bao lâu?"
+  expect: {slug: chinh-sach-bao-hanh, section: "Thời hạn tiêu chuẩn theo nhóm hạng mục"}
+
+- question: "Khách mua thêm 6 tháng gia hạn thì khoản tiền công ty giữ lại có phải chờ thêm 6 tháng mới được trả không?"
+  expect: {slug: chinh-sach-bao-hanh, section: "Giữ lại bảo hành"}
+
+# Đáng bàn: tài liệu quy-trinh-nghiem-thu (mục "Nghiệm thu bàn giao hoàn công") cũng nói ngày ký biên bản là ngày bảo hành
+# bắt đầu; mục được chọn là nơi giải thích đầy đủ và loại trừ mốc ký hợp đồng và mốc nghiệm thu giai đoạn.
+- question: "Thời hạn bảo hành được tính từ ngày ký hợp đồng hay từ ngày nào?"
+  expect: {slug: chinh-sach-bao-hanh, section: "Bảo hành bắt đầu từ khi nào"}
+
+# loai-tru-bao-hanh (2)
+- question: "Chủ nhà tự khoan tường treo tivi làm trầy mảng sơn thì công ty có phải sửa không?"
+  expect: {slug: loai-tru-bao-hanh, section: "Lỗi không được bảo hành"}
+
+- question: "Tường sơn xong bị nổi bọng tròn vì thợ thi công lúc nền còn ẩm, công ty có sửa miễn phí không?"
+  expect: {slug: loai-tru-bao-hanh, section: "Lỗi được bảo hành"}
+
+# quy-trinh-xu-ly-khieu-nai-bao-hanh (2)
+# Đáng bàn: phần mở đầu tài liệu và mục "Tiếp nhận" cũng nhắc "phản hồi trong 48 giờ"; "có người đến xem" là khảo sát tận nơi
+# (5 ngày làm việc) nên đáp án là mục khảo sát. Đoạn mở đầu (chưa có tiêu đề ##) có thể trúng tài liệu nhưng sai mục.
+- question: "Khách khiếu nại bong tróc thì bao lâu có người đến xem?"
+  expect: {slug: quy-trinh-xu-ly-khieu-nai-bao-hanh, section: "Khảo sát hiện trường"}
+
+- question: "Khi lỗi không thuộc diện được sửa, công ty phải trả lời khách như thế nào?"
+  expect: {slug: quy-trinh-xu-ly-khieu-nai-bao-hanh, section: "Từ chối bảo hành"}
+
+# quy-trinh-nghiem-thu (3)
+- question: "Báo giá chia 4 đợt thì mỗi đợt thanh toán gắn với cột mốc nào?"
+  expect: {slug: quy-trinh-nghiem-thu, section: "Liên hệ với đợt thanh toán"}
+
+- question: "Ngày bàn giao cuối cùng, công ty phải giao lại những gì cho khách?"
+  expect: {slug: quy-trinh-nghiem-thu, section: "Nghiệm thu bàn giao hoàn công"}
+
+# Đáng bàn: thi-cong-chong-tham (mục "Chống thấm lớp 2") nói chỉ huy trưởng "nghiệm thu bằng mắt" trước khi thử ngâm nước,
+# nhưng đó là kiểm tra nội bộ; câu hỏi nói về BIÊN BẢN nghiệm thu, và điều kiện ký biên bản chỉ nằm ở mục giai đoạn 2.
+- question: "Biên bản nghiệm thu hạng mục chống thấm chỉ được ký khi đã đạt điều kiện gì?"
+  expect: {slug: quy-trinh-nghiem-thu, section: "Nghiệm thu giai đoạn 2"}
+
+# dieu-kien-thi-cong-va-an-toan (1)
+- question: "Trời mưa có được sơn tường ngoài không?"
+  expect: {slug: dieu-kien-thi-cong-va-an-toan, section: "Thời tiết"}
+
+# dinh-muc-hao-hut-va-so-lop (1)
+- question: "Vì sao báo giá thi công bằng phun ghi số thùng sơn nhiều hơn báo giá lăn dù cùng diện tích?"
+  expect: {slug: dinh-muc-hao-hut-va-so-lop, section: "Hao hụt thi công"}
+
+# dinh-muc-nhan-cong-va-to-doi (2)
+- question: "Vì sao công thợ chống thấm nhà vệ sinh bị nhân lên 1,4 trong khi sân thượng chỉ 1,2?"
+  expect: {slug: dinh-muc-nhan-cong-va-to-doi, section: "Hệ số theo hạng mục"}
+
+- question: "Chi phí nhân công trong báo giá tính thế nào nếu một phần thợ là người của công ty, phần còn lại gọi từ bên ngoài?"
+  expect: {slug: dinh-muc-nhan-cong-va-to-doi, section: "Đội nhà và thuê ngoài"}
+
+# thi-cong-chong-tham (2)
+# Đáng bàn: quy-trinh-nghiem-thu (mục "Nghiệm thu giai đoạn 2") cũng nhắc thử ngâm nước 48 giờ trước khi nghiệm thu; mục được chọn
+# là nơi mô tả cách thử (mực nước, đánh dấu băng keo, thời gian). Trúng tài liệu nghiệm thu thì tính là trượt tài liệu.
+- question: "Sân thượng phải ngâm nước bao lâu trước khi nghiệm thu?"
+  expect: {slug: thi-cong-chong-tham, section: "Thử ngâm nước"}
+
+- question: "Vì sao chống thấm gốc PU giá cao gần gấp đôi loại gốc xi măng polymer?"
+  expect: {slug: thi-cong-chong-tham, section: "Vì sao hệ đàn hồi (PU) đắt hơn"}
+
+# thi-cong-epoxy-va-hieu-ung-da (1)
+- question: "Sơn epoxy sàn đã pha xong thì dùng được trong bao lâu?"
+  expect: {slug: thi-cong-epoxy-va-hieu-ung-da, section: "Trộn hai thành phần"}
+
+# thi-cong-kim-loai-va-chong-nong (1)
+- question: "Mái tôn phơi nắng nóng bỏng tay thì có quét lớp phản xạ nhiệt được không?"
+  expect: {slug: thi-cong-kim-loai-va-chong-nong, section: "Sơn chống nóng mái tôn"}
+
+# thi-cong-son-nuoc-va-ba-matit (1)
+- question: "Giữa hai lần lăn sơn phủ phải chờ ít nhất mấy tiếng?"
+  expect: {slug: thi-cong-son-nuoc-va-ba-matit, section: "Thời gian khô"}
+
+# xu-ly-be-mat (1)
+# Đáng bàn: ngưỡng 16% cũng được nhắc lại trong loai-tru-bao-hanh và quy-trinh-nghiem-thu, nhưng chỉ ở đây nó là quy tắc
+# (đo ở đâu, vượt thì làm gì); hai nơi kia chỉ dẫn lại.
+- question: "Độ ẩm tường tối đa bao nhiêu phần trăm thì được phép bả hay sơn?"
+  expect: {slug: xu-ly-be-mat, section: "Kiểm tra độ ẩm"}
+
+# ---------------------------------------------------------------- câu cần hai tài liệu
+
+- question: "Vì sao chống thấm hệ PU đắt hơn hệ xi măng và nó được bảo hành bao lâu?"
+  expect:
+    - {slug: thi-cong-chong-tham, section: "Vì sao hệ đàn hồi (PU) đắt hơn"}
+    - {slug: chinh-sach-bao-hanh, section: "Thời hạn tiêu chuẩn theo nhóm hạng mục"}
+
+- question: "Tường nứt rộng nửa milimét thì công ty có bảo hành không, và thợ phải làm gì trước khi bả?"
+  expect:
+    - {slug: loai-tru-bao-hanh, section: "Lỗi không được bảo hành"}
+    - {slug: xu-ly-be-mat, section: "Xử lý khuyết tật"}
+
+- question: "Chống thấm đã sửa theo bảo hành thì có phải thử ngâm nước lại không, và thử trong bao lâu?"
+  expect:
+    - {slug: quy-trinh-xu-ly-khieu-nai-bao-hanh, section: "Khắc phục"}
+    - {slug: thi-cong-chong-tham, section: "Thử ngâm nước"}
+
+- question: "Dự toán mặt tiền sơn phun thì hao hụt vật tư tính bao nhiêu phần trăm và mỗi mét vuông tốn khoảng bao nhiêu ngày công?"
+  expect:
+    - {slug: dinh-muc-hao-hut-va-so-lop, section: "Hao hụt thi công"}
+    - {slug: dinh-muc-nhan-cong-va-to-doi, section: "Ngày công trên m²"}
+
+# ---------------------------------------------------------------- câu ngoài phạm vi (kho không có đáp án)
+
+# Kho chỉ nói giá tương đối (hệ PU gần gấp đôi), không có bảng giá hay giá thị trường.
+- question: "Giá một thùng sơn nước ngoại thất trên thị trường hiện nay là bao nhiêu?"
+  expect: null
+
+# Không có tài liệu nhân sự nào.
+- question: "Nhân viên thi công được nghỉ phép năm bao nhiêu ngày và xin nghỉ như thế nào?"
+  expect: null
+
+# Kho nói về thi công sơn, không nói về thủ tục hành chính xây dựng.
+- question: "Muốn xin giấy phép xây dựng để cải tạo nhà thì nộp hồ sơ ở đâu?"
+  expect: null
+
+# Sơn mái tôn có trong kho, nhưng sửa kết cấu mái thì không.
+- question: "Xà gồ mái nhà bị mục thì thay thế và gia cố kết cấu như thế nào?"
+  expect: null
