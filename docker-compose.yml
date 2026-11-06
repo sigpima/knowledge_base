@@ -1,5 +1,7 @@
 # Demo một lệnh: `docker compose up` dựng Postgres, nạp dữ liệu mẫu rồi bật API ingest + MCP server.
 # API chat cho web (service `chat`) cần khoá Gemini nên chỉ bật khi chọn profile: `docker compose --profile chat up`.
+# Hỏi đáp chính sách (RAG, xem docs/rag.md) cũng tuỳ chọn: `GEMINI_API_KEY=... docker compose --profile rag up` thêm Milvus
+# (`milvus`) và bước nạp tài liệu chính sách (`policy-seed`, cần khoá Gemini để tạo embedding); ghép được với `--profile chat`.
 # Mật khẩu dưới đây chỉ dành cho demo trên máy cá nhân; đổi bằng biến môi trường hoặc file .env.
 
 x-app: &app
@@ -46,12 +48,55 @@ services:
     depends_on:
       seed:
         condition: service_completed_successfully
+      policy-seed:
+        condition: service_completed_successfully
+        required: false  # chỉ chờ khi profile `rag` bật; không có profile thì bỏ qua
     environment:
       DATABASE_URL_READONLY: postgresql+psycopg2://knowledge_base_ro:${RO_PASSWORD:-demo-readonly}@db:5432/knowledge_base
       MCP_SERVER_HOST: 0.0.0.0
+      # Tool search_policies (tuỳ chọn): cần Milvus (profile `rag`) và khoá Gemini để nhúng câu hỏi; thiếu thì tool trả lỗi rõ ràng, các tool khác vẫn chạy.
+      MILVUS_URI: ${MILVUS_URI:-http://milvus:19530}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}  # phải trùng với model lúc nạp (policy-seed)
     command: python main_mcp.py
     ports:
       - "127.0.0.1:8002:8002"
+
+  # Milvus standalone một container: etcd nhúng + lưu trữ cục bộ trong volume `milvus_data` (cấu hình theo standalone_embed.sh của Milvus).
+  # Demo không bật xác thực; cổng gRPC chỉ mở trên 127.0.0.1 (cổng 9091 chỉ dùng nội bộ cho healthcheck).
+  milvus:
+    image: milvusdb/milvus:v3.0.5
+    profiles: ["rag"]
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_USE_EMBED: "true"
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      COMMON_STORAGETYPE: local
+      DEPLOY_MODE: STANDALONE
+    volumes:
+      - milvus_data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 90s
+    ports:
+      - "127.0.0.1:19530:19530"
+
+  # Nạp tài liệu chính sách vào Milvus: nhúng bằng Gemini nên cần GEMINI_API_KEY; chạy lại an toàn (tài liệu không đổi thì bỏ qua).
+  policy-seed:
+    <<: *app
+    profiles: ["rag"]
+    depends_on:
+      milvus:
+        condition: service_healthy
+    environment:
+      MILVUS_URI: http://milvus:19530
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}  # đổi model thì phải nạp lại (vector gắn với model)
+    command: python -m app.cli ingest-policies data/policies --prune
+    restart: "no"
 
   chat:
     <<: *app
@@ -75,3 +120,6 @@ services:
     ports:
       - "127.0.0.1:8003:8003"
     restart: unless-stopped
+
+volumes:
+  milvus_data:

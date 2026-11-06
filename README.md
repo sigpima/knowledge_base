@@ -43,6 +43,8 @@ Xem [4 ví dụ hỏi đáp thật](#ví-dụ-hỏi-đáp-thật) bên dưới.
 flowchart LR
     Y["data/sample/*.yaml<br/>(mỗi file = 1 công trình)"] -->|"kiểm tra + ghi 1 transaction"| P[("Postgres<br/>schema quotation")]
     P -->|"role chỉ đọc"| M["MCP server :8002<br/>11 tool"]
+    Q["data/policies/*.md<br/>(tuỳ chọn, profile rag)"] -->|"ingest-policies + embedding"| V[("Milvus :19530")]
+    V -->|"search_policies"| M
     M --> A["Claude / Codex / agent khác"]
     I["API ingest :8000<br/>POST /ingest"] -->|"quyền ghi"| P
 ```
@@ -89,6 +91,22 @@ url = "http://127.0.0.1:8002/mcp"
 ```
 
 Rồi hỏi bằng tiếng Việt, ví dụ: *"Vì sao đơn giá chống thấm sân thượng ở Biệt thự Sen Vàng cao hơn Biệt thự Lúa Non?"*
+
+## Hỏi đáp chính sách (RAG)
+
+Ngoài số liệu, repo có 12 tài liệu chính sách giả lập (quy trình thi công, định mức, bảo hành, nghiệm thu) trong `data/policies/`. Chúng được cắt đoạn,
+nhúng bằng Gemini, lưu trong Milvus và truy xuất qua tool `search_policies`, để agent giải thích phần "vì sao" mà bảng số không nói: *"Vì sao báo giá của Sen Vàng khác Lúa Non,
+và mỗi báo giá được bảo hành bao lâu theo chính sách?"* (số liệu từ các tool báo giá, quy định từ `search_policies`, có trích nguồn dạng `[slug › mục]`).
+Phần này **tuỳ chọn** và cần khoá Gemini cho cả bước nạp lẫn lúc truy vấn:
+
+```bash
+export GEMINI_API_KEY=...        # hoặc ghi vào file .env
+docker compose --profile rag up -d                   # thêm Milvus + nạp tài liệu (policy-seed); ghép được với --profile chat
+python -m app.cli ingest-policies data/policies --prune     # nạp lại ngoài compose
+```
+
+Kho vector nằm trong volume `milvus_data` (`docker compose down -v` xoá nó). Milvus ở bản demo không có xác thực nên cổng chỉ mở trên `127.0.0.1`.
+Kiến trúc, cách thêm tài liệu mới, cấu hình và các giới hạn (ngưỡng điểm chưa hiệu chỉnh): [docs/rag.md](docs/rag.md).
 
 ## Chat ngay trong terminal (Gemini)
 
@@ -218,9 +236,11 @@ app/domains/quotation/            domain duy nhất: domain/ → application/ �
   application/services/           các bộ so sánh: đơn giá, chi tiết dự toán, nhân công, cơ cấu chi phí
 app/core/services/                lớp truy vấn đọc mà MCP dùng
 app/interfaces/http/api.py        service ingest (FastAPI): /health, /ingest, /work-items/{id}
+app/domains/policy/               RAG chính sách (tuỳ chọn): cắt đoạn, embedding Gemini, kho vector Milvus, truy xuất
 main_mcp.py                       MCP server (11 tool, role Postgres chỉ đọc)
 scripts/                          sinh dữ liệu, seed, init DB, smoke test, client MCP tối giản
 data/sample/                      24 file YAML giả
+data/policies/                    12 tài liệu chính sách giả (Markdown)
 ```
 
 ## Phát triển và test

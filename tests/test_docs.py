@@ -102,3 +102,45 @@ def test_compose_chat_service_passes_through_every_documented_chat_switch():
 
     assert {"CHAT_DEMO_ENABLED", "CHAT_MAX_QUESTION_CHARS", "CHAT_MAX_TURNS_PER_SESSION"} <= operator_switches
     assert [name for name in sorted(operator_switches) if f"{name}: ${{{name}:-" not in chat_block] == []
+
+
+def test_readme_has_a_policy_rag_section_linking_to_the_rag_doc():
+    assert "## Hỏi đáp chính sách (RAG)" in README
+    section = README.split("## Hỏi đáp chính sách (RAG)", 1)[1].split("\n## ", 1)[0]
+
+    for phrase in ("search_policies", "docs/rag.md", "--profile rag", "GEMINI_API_KEY"):
+        assert phrase in section, phrase
+
+
+def test_rag_doc_states_its_honest_limits():
+    doc = (ROOT / "docs" / "rag.md").read_text(encoding="utf-8")
+
+    for phrase in (
+        "milvus_data", "down -v", "policy-seed", "GEMINI_API_KEY", "GEMINI_EMBEDDING_MODEL", "POLICY_MIN_SCORE",
+        "ingest-policies data/policies --prune", "extend_percent", "extend_period", "read_only=True", "127.0.0.1",
+        "slug", "doc_type", "applies_to",
+    ):
+        assert phrase in doc, phrase
+
+
+def test_rag_doc_lists_every_policy_document():
+    doc = (ROOT / "docs" / "rag.md").read_text(encoding="utf-8")
+    slugs = [path.stem for path in sorted((ROOT / "data" / "policies").glob("*.md"))]
+
+    assert len(slugs) == 12
+    assert [slug for slug in slugs if f"`{slug}`" not in doc] == []
+
+
+def test_env_example_documents_the_rag_settings():
+    env_example = (ROOT / ".env.example").read_text(encoding="utf-8")
+
+    for name in ("MILVUS_URI", "MILVUS_TOKEN", "MILVUS_COLLECTION", "GEMINI_EMBEDDING_MODEL", "POLICY_MIN_SCORE"):
+        assert name in env_example, name
+
+
+def test_claude_md_documents_the_policy_feature():
+    claude_md = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+    for phrase in ("ingest-policies", "app/domains/policy/", "data/policies/", "đúng 11 tool", "Milvus Lite", "policy_store"):
+        assert phrase in claude_md, phrase
+    assert "10 tool" not in claude_md

@@ -1,0 +1,108 @@
+# Hỏi đáp chính sách (RAG)
+
+Ngoài số liệu báo giá trong Postgres, repo có một kho **tài liệu chính sách** (quy trình thi công, định mức, bảo hành,
+nghiệm thu) để agent trả lời các câu hỏi *"vì sao"* mà bảng số không nói được, ví dụ *"vì sao hai báo giá ghi thời
+hạn bảo hành khác nhau?"*. Tài liệu được cắt thành đoạn, nhúng thành vector bằng Gemini, lưu trong Milvus và truy xuất qua
+tool MCP `search_policies`. Toàn bộ nội dung là **giả lập** (công ty "Sơn Việt Demo Co.", xem phần miễn trừ trong README).
+
+Tính năng này **tuỳ chọn**: không bật profile `rag` thì mọi thứ khác vẫn chạy như cũ, và `search_policies` trả lỗi rõ ràng
+(`{"error": "..."}`) thay vì làm hỏng phiên MCP.
+
+## Kiến trúc và luồng dữ liệu
+
+```mermaid
+flowchart LR
+    D["data/policies/*.md<br/>(12 tài liệu)"] -->|"ingest-policies:<br/>chia đoạn + embedding"| V[("Milvus :19530<br/>collection policy_chunks")]
+    G["Gemini embedding"] -.->|"vector 768 chiều"| V
+    V -->|"read_only=True"| M["MCP server :8002<br/>search_policies"]
+    G -.->|"nhúng câu hỏi"| M
+    M --> A["Claude / bot chat"]
+```
+
+- **Nạp (ghi):** `python -m app.cli ingest-policies data/policies --prune` (trong compose là service `policy-seed`). Mỗi tài liệu được
+  cắt đoạn, nhúng bằng Gemini rồi ghi vào Milvus. Chạy lại an toàn: tài liệu không đổi (cùng nội dung và cùng model embedding) thì bỏ qua,
+  không gọi Gemini. `--prune` xoá khỏi kho những tài liệu không còn trong thư mục. Mã thoát: 0 thành công, 1 có tài liệu lỗi, 2 sai đối số
+  hoặc thiếu cấu hình (thiếu khoá, Milvus không kết nối được).
+- **Truy xuất (đọc):** tool `search_policies(query, top_k=5, doc_type=None)` nhúng câu hỏi bằng cùng model rồi tìm các đoạn gần nhất
+  (COSINE, chỉ trong các dòng cùng model). Kết quả: `{"passages": [{"slug", "title", "doc_type", "section", "text", "score"}], "row_count": n}`,
+  xếp theo `score` giảm dần. `passages` rỗng nghĩa là không có quy định phù hợp. Bot chat được hướng dẫn chỉ dựa vào `text` và trích nguồn dạng `[slug › section]`.
+- **Cắt đoạn:** theo heading. Văn bản được tách theo `##`/`###`; mỗi đoạn thuộc đúng một mục, dài tối đa 1000 ký tự, không chồng lấn.
+  Mỗi đoạn được nhúng cùng đường dẫn mục (`tiêu đề › mục`) để câu hỏi ngắn vẫn khớp đúng ngữ cảnh. 12 tài liệu hiện cho 67 đoạn.
+
+## Bộ tài liệu mẫu (`data/policies/`)
+
+| `doc_type` | Tài liệu (`slug`) |
+|---|---|
+| `technical` | `xu-ly-be-mat`, `thi-cong-son-nuoc-va-ba-matit`, `thi-cong-chong-tham`, `thi-cong-epoxy-va-hieu-ung-da`, `thi-cong-kim-loai-va-chong-nong`, `dinh-muc-hao-hut-va-so-lop`, `dinh-muc-nhan-cong-va-to-doi`, `dieu-kien-thi-cong-va-an-toan` |
+| `warranty` | `chinh-sach-bao-hanh`, `loai-tru-bao-hanh`, `quy-trinh-xu-ly-khieu-nai-bao-hanh`, `quy-trinh-nghiem-thu` |
+
+Lưu ý về ngữ nghĩa: trong `chinh-sach-bao-hanh`, `extend_percent` (tỉ lệ phần trăm trên giá trị hợp đồng trả thêm) và `extend_period`
+(số tháng bảo hành mua thêm) là **quy ước của bản demo**, vì mô tả cột trong dữ liệu không nói rõ; đừng xem đó là quy tắc nghiệp vụ thật.
+
+## Chạy
+
+Cần khoá Gemini (lấy tại https://aistudio.google.com/apikey) vì cả hai bước đều tạo embedding:
+
+```bash
+export GEMINI_API_KEY=...        # hoặc ghi vào file .env cạnh docker-compose.yml
+docker compose --profile rag up -d                      # db + seed + api + mcp + milvus + policy-seed
+docker compose --profile rag --profile chat up -d       # thêm API chat (cổng 8003)
+docker compose --profile rag logs policy-seed           # xem kết quả nạp: mỗi tài liệu created/updated/unchanged
+```
+
+- `milvus` (image `milvusdb/milvus`, ghim phiên bản trong `docker-compose.yml`) chạy một container: etcd nhúng và lưu trữ cục bộ, dữ liệu trong volume
+  **`milvus_data`**. `policy-seed` chờ Milvus khoẻ rồi nạp và thoát; `mcp` chờ `policy-seed` hoàn tất khi profile `rag` bật.
+- **`docker compose down -v` xoá volume `milvus_data`**: kho chính sách mất hết. Lần `up` sau `policy-seed` nạp lại (tốn lượt gọi Gemini). `down` không kèm `-v` giữ nguyên dữ liệu.
+- **Khoá Gemini cần ở cả `policy-seed` (nhúng tài liệu) lẫn `mcp` (nhúng câu hỏi lúc truy vấn).** Thiếu khoá thì `policy-seed` thoát mã 2 và
+  `search_policies` trả `{"error": "Chưa cấu hình khoá Gemini ..."}`; các tool khác không bị ảnh hưởng. Chưa nạp hoặc Milvus chưa chạy thì tool báo "Kho chính sách chưa được nạp hoặc không kết nối được".
+- Ngoài compose: `docker compose --profile rag up -d milvus`, rồi `MILVUS_URI=http://127.0.0.1:19530 GEMINI_API_KEY=... python -m app.cli ingest-policies data/policies --prune`
+  và chạy MCP với cùng hai biến. Biến cấu hình xem `.env.example`.
+
+## Cấu hình
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `MILVUS_URI` | `http://127.0.0.1:19530` (compose: `http://milvus:19530`) | máy chủ Milvus (hoặc đường dẫn file `.db` cho Milvus Lite) |
+| `MILVUS_TOKEN` | rỗng | token nếu Milvus bật xác thực (demo không bật) |
+| `MILVUS_COLLECTION` | `policy_chunks` | tên collection |
+| `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | model embedding (vector 768 chiều) |
+| `POLICY_MIN_SCORE` | `0.0` | đoạn có `score` thấp hơn bị bỏ khỏi kết quả; `0.0` là không lọc |
+
+- **Vector gắn với model.** Mỗi dòng lưu tên model đã nhúng và truy vấn chỉ tìm trong các dòng cùng model với embedder đang dùng. Đổi `GEMINI_EMBEDDING_MODEL`
+  thì phải chạy lại `ingest-policies` (với compose: `docker compose --profile rag up policy-seed`), và đặt cùng giá trị cho `mcp`; nếu quên, `search_policies` trả `passages` rỗng.
+- **`POLICY_MIN_SCORE` chưa được hiệu chỉnh.** Mặc định 0.0 (không ngưỡng). Chưa có số đo trên model embedding thật vì lúc phát triển không có khoá Gemini; ngưỡng phù hợp
+  cần đo bằng kịch bản đánh giá (sẽ thêm ở bước sau). Trước đó, bot dựa vào chỉ dẫn "kết quả không liên quan thì nói chưa tìm thấy" chứ không dựa vào ngưỡng điểm.
+
+## Thêm một tài liệu chính sách
+
+1. Tạo `data/policies/ten-tai-lieu.md` bắt đầu bằng front matter YAML:
+
+   ```yaml
+   ---
+   slug: ten-tai-lieu          # duy nhất, chữ thường/số/gạch ngang, nên trùng tên file
+   title: Tiêu đề hiển thị trong trích dẫn
+   doc_type: technical         # technical (quy trình, định mức, điều kiện thi công) hoặc warranty (bảo hành, nghiệm thu)
+   applies_to:                 # nhóm hạng mục tài liệu áp dụng
+     - Sơn nước nội thất
+   ---
+   ```
+
+2. Viết nội dung Markdown: mỗi heading `##` (và `###`) là một mục, cũng là đơn vị cắt đoạn và là phần `section` trong trích dẫn. Mục không có thân bị bỏ; heading sâu hơn `###` không tạo mục mới.
+3. Nạp: `python -m app.cli ingest-policies data/policies --prune` (hoặc `docker compose --profile rag up policy-seed`; file nằm trong image nên cần `--build` khi sửa).
+   Khoá lạ trong front matter bị từ chối. File sai front matter hoặc trùng `slug` được báo trên stderr, mã thoát 1 và `--prune` không chạy.
+
+Dữ liệu trong `data/policies/` là giả lập; đừng đưa quy định, thương hiệu hay tiêu chuẩn thật vào repo công khai.
+
+## Giới hạn và bảo mật (nói thẳng)
+
+- **Chỉ đọc nằm ở mã, không phải ở Milvus.** MCP mở kho với `read_only=True` và `MilvusPolicyStore` từ chối mọi thao tác ghi ở chế độ này. Khác với Postgres (role chỉ đọc do DB ép),
+  Milvus bản demo **không bật xác thực và không có role chỉ đọc**: ai nối được vào cổng 19530 đều ghi/xoá được. Vì vậy cổng chỉ mở trên `127.0.0.1`; đừng mở ra ngoài khi chưa bật xác thực.
+- Milvus standalone một container, một nút, không sao lưu; phù hợp demo và máy cá nhân, không phải triển khai sản xuất.
+- Nếu collection bị gỡ khỏi bộ nhớ (ví dụ ai đó gọi `release_collection`), `search_policies` báo lỗi chung cho đến khi chạy lại `ingest-policies` (lệnh này nạp lại collection). Khởi động lại container thì Milvus tự nạp lại.
+- Khoá Gemini đi vào container `mcp` và `policy-seed` qua biến môi trường; không ghi vào image hay log.
+
+## Kiểm tra
+
+Test dùng **Milvus Lite** (file `.db` cục bộ, không cần Docker) cùng embedder giả tất định, nên không cần khoá hay Milvus thật: `pytest -q` (cài `requirements-dev.txt`; nếu Milvus Lite không chạy được trên máy,
+các test liên quan tự bỏ qua). Cấu hình compose được kiểm tra tĩnh bằng `tests/test_compose_rag.py`. Khi viết tài liệu này, service `milvus` đã được chạy thật (nạp, tìm kiếm, khởi động lại container),
+nhưng bước `policy-seed` và việc nhúng bằng Gemini thật chưa được chạy đầu cuối vì không có khoá.
