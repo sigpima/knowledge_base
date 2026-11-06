@@ -54,6 +54,11 @@ APPLIES_TO_ALL = {
 }
 
 
+def has_figure(body: str, needle: str) -> bool:
+    """Khớp nguyên con số/đơn vị: `1,2` không khớp trong `1,25`, `2 m` không khớp trong `2 mm`, `6 giờ` không khớp trong `16 giờ`."""
+    return re.search(r"(?<![\d,])" + re.escape(needle) + r"(?!\w|,\d)", body) is not None
+
+
 @pytest.fixture(scope="module")
 def technical() -> dict[str, PolicyDocument]:
     docs = [d for d in load_policy_dir(POLICY_DIR) if d.front.doc_type == "technical"]
@@ -78,16 +83,16 @@ def test_sections_match_the_plan(technical, slug):
 @pytest.mark.parametrize("slug", sorted(EXPECTED))
 def test_pinned_figures_present(technical, slug):
     body = technical[slug].body
-    missing = [needle for needle in EXPECTED[slug][1] if needle not in body]
+    missing = [needle for needle in EXPECTED[slug][1] if not has_figure(body, needle)]
     assert not missing, f"{slug} thiếu: {missing}"
 
 
 def test_labor_and_waste_pinned_values(technical):
     labor = technical["dinh-muc-nhan-cong-va-to-doi"].body
     for needle in ("0,015", "0,04", "1,05", "1,25"):
-        assert needle in labor
+        assert has_figure(labor, needle), needle
     waste = technical["dinh-muc-hao-hut-va-so-lop"].body
-    assert "3%" in waste and "12%" in waste
+    assert has_figure(waste, "3%") and has_figure(waste, "12%")
 
 
 @pytest.mark.parametrize("slug", sorted(EXPECTED))

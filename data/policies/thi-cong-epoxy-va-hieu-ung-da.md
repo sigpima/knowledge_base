@@ -44,7 +44,7 @@ Lý do: vân đá là hiệu ứng thị giác nên không thể sửa chữa c�
 
 ## Vì sao nhân công cao
 
-Trong định mức của chúng ta, hiệu ứng đá có hệ số nhân công 1,5, tức tốn công gấp khoảng 1,5 lần sơn thường trên cùng diện tích, dù đơn giá nhân công một ngày công không đổi. Lý do:
+Trong định mức của chúng ta, hiệu ứng đá có hệ số hạng mục 1,5, tức tốn công gấp khoảng 1,5 lần sơn thường trên cùng diện tích, dù đơn giá nhân công một ngày công không đổi. Lý do:
 
 1. Mỗi mét vuông phải qua nhiều thao tác tạo vân bằng tay thay vì lăn một nhịp như sơn nước.
 2. Thợ phải làm chậm và đều tay, và phải chờ từng lớp khô nên không làm đan xen được nhiều mảng như sơn thường.

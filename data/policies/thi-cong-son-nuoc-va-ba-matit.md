@@ -14,7 +14,7 @@ applies_to:
 
 Tài liệu giả lập cho bản demo; công ty, sản phẩm đều là bịa.
 
-Tài liệu này quy định trình tự và số lớp khi Sơn Việt Demo Co. thi công các hạng mục sơn nước ngoại thất, sơn nước nội thất, bả matit hoàn thiện, sơn lót chống kiềm và sơn trần thạch cao. Phần chuẩn bị bề mặt đã nằm ở tài liệu xử lý bề mặt; ở đây chỉ nói về các lớp vật liệu. Trình tự cố định là: Sơn lót, Bả matit lớp 1, Bả matit lớp 2, Sơn phủ lớp 1, Sơn phủ lớp 2. Mỗi lớp chỉ được làm khi lớp trước đã khô đủ thời gian quy định.
+Tài liệu này quy định trình tự và số lớp khi Sơn Việt Demo Co. thi công các hạng mục sơn nước ngoại thất, sơn nước nội thất, bả matit hoàn thiện, sơn lót chống kiềm và sơn trần thạch cao. Phần chuẩn bị bề mặt đã nằm ở tài liệu xử lý bề mặt; ở đây chỉ nói về các lớp vật liệu. Khi một công trình có đủ các lớp, trình tự thường làm là: Sơn lót, Bả matit lớp 1, Bả matit lớp 2, Sơn phủ lớp 1, Sơn phủ lớp 2; hạng mục chỉ gồm một phần của chuỗi này thì bỏ các lớp không có trong hợp đồng. Mỗi lớp chỉ được làm khi lớp trước đã khô đủ thời gian quy định.
 
 ## Sơn lót chống kiềm
 
@@ -46,7 +46,7 @@ Lý do: một lớp sơn không đủ độ dày màng khô để che nền, ch�
 Thời gian khô tối thiểu giữa các lớp, tính ở điều kiện thông thường:
 
 1. Giữa hai lớp sơn phủ: tối thiểu 4 giờ.
-2. Sau lớp bả, trước khi chà nhám hoặc sơn lót tiếp: tối thiểu 6 giờ.
+2. Sau lớp bả, trước khi chà nhám hoặc sơn phủ: tối thiểu 6 giờ.
 3. Sau lớp sơn lót chống kiềm, trước khi bả hoặc sơn phủ: tối thiểu 2 giờ.
 4. Trời nồm, mưa phùn hoặc phòng kín không thông gió: kéo dài thời gian chờ, không rút ngắn. Người thi công kiểm tra bằng tay: bề mặt phải khô ráo, không dính.
 

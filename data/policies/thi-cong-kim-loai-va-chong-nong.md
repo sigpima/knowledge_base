@@ -36,7 +36,7 @@ Lý do: kim loại sạch vừa chà nhám phản ứng với oxy và hơi ẩm 
 1. Bước Sơn phủ được ghi một dòng trong quy trình nhưng thi công 2 lớp theo định mức hạng mục; lớp thứ hai chỉ làm khi lớp thứ nhất đã khô theo thời gian ghi trên thùng.
 2. Dùng cọ hoặc rulo lông ngắn, kéo sơn mỏng và đều; chú ý các cạnh, góc và mối hàn vì đây là nơi sơn mỏng nhất và gỉ lên đầu tiên.
 3. Với sơn dầu như dòng Đại Phát Alkyd, sơn chậm khô hơn sơn nước, nên che bụi và tránh để côn trùng bám vào khi sơn còn ướt.
-4. Hạng mục cửa sắt, lan can có nhiều chi tiết nhỏ nên hệ số nhân công của nó cao hơn sơn tường, xem tài liệu định mức nhân công.
+4. Hạng mục cửa sắt, lan can có nhiều chi tiết nhỏ nên hệ số hạng mục của nó (1,3) cao hơn sơn tường, xem tài liệu định mức nhân công.
 
 Lý do: cạnh và góc là nơi sức căng bề mặt kéo sơn mỏng đi, màng mỏng thì chống gỉ kém. Hai lớp mỏng vừa tạo màng đủ dày vừa ít chảy hơn một lớp dày.
 
