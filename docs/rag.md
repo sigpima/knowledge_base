@@ -51,12 +51,19 @@ docker compose --profile rag logs policy-seed           # xem kết quả nạp:
 ```
 
 - `milvus` (image `milvusdb/milvus`, ghim phiên bản trong `docker-compose.yml`) chạy một container: etcd nhúng và lưu trữ cục bộ, dữ liệu trong volume
-  **`milvus_data`**. `policy-seed` chờ Milvus khoẻ rồi nạp và thoát; `mcp` chờ `policy-seed` hoàn tất khi profile `rag` bật.
+  **`milvus_data`**. `policy-seed` chờ Milvus khoẻ rồi nạp và thoát. `mcp` **không** chờ `policy-seed`: nó khởi động độc lập (RAG tuỳ chọn và cô lập), nên trong lúc chưa nạp xong, hoặc khi nạp lỗi, chỉ `search_policies` báo lỗi còn mọi tool khác vẫn chạy.
 - **`docker compose down -v` xoá volume `milvus_data`**: kho chính sách mất hết. Lần `up` sau `policy-seed` nạp lại (tốn lượt gọi Gemini). `down` không kèm `-v` giữ nguyên dữ liệu.
 - **Khoá Gemini cần ở cả `policy-seed` (nhúng tài liệu) lẫn `mcp` (nhúng câu hỏi lúc truy vấn).** Thiếu khoá thì `policy-seed` thoát mã 2 và
-  `search_policies` trả `{"error": "Chưa cấu hình khoá Gemini ..."}`; các tool khác không bị ảnh hưởng. Chưa nạp hoặc Milvus chưa chạy thì tool báo "Kho chính sách chưa được nạp hoặc không kết nối được".
+  `search_policies` trả `{"error": "Chưa cấu hình khoá Gemini ..."}`; `mcp` vẫn chạy và các tool khác không bị ảnh hưởng. Chưa nạp hoặc Milvus chưa chạy thì tool báo "Kho chính sách chưa được nạp hoặc không kết nối được".
 - Ngoài compose: `docker compose --profile rag up -d milvus`, rồi `MILVUS_URI=http://127.0.0.1:19530 GEMINI_API_KEY=... python -m app.cli ingest-policies data/policies --prune`
   và chạy MCP với cùng hai biến. Biến cấu hình xem `.env.example`.
+
+### Khi `policy-seed` lỗi
+
+`policy-seed` thoát mã khác 0 khi thiếu `GEMINI_API_KEY` hoặc Milvus không kết nối được (mã 2), hoặc có tài liệu lỗi (mã 1). Việc này **không** làm `mcp` dừng: `search_policies` trả
+lỗi tiếng Việt ("Kho chính sách chưa được nạp ..." hoặc "Chưa cấu hình khoá Gemini ...") cho tới khi nạp thành công. Xem nguyên nhân: `docker compose --profile rag logs policy-seed`.
+Khắc phục: sửa nguyên nhân (ví dụ đặt `GEMINI_API_KEY` trong `.env`, sửa file chính sách sai), rồi chạy lại bước nạp bằng `docker compose --profile rag up policy-seed`
+(hoặc `docker compose --profile rag run --rm policy-seed`). Nếu đổi khoá, tạo lại cả `mcp` để nhận biến mới: `docker compose --profile rag up -d mcp`.
 
 ## Cấu hình
 

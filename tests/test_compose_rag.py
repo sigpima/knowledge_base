@@ -22,7 +22,8 @@ def test_rag_services_only_run_with_the_rag_profile():
     # các service mặc định không được kéo theo Milvus (nếu không `docker compose up` thường sẽ bật nó)
     for name in ("db", "seed", "api", "mcp"):
         assert "profiles" not in SERVICES[name], name
-        assert "milvus" not in (SERVICES[name].get("depends_on") or {}), name
+        depends_on = SERVICES[name].get("depends_on") or {}
+        assert "milvus" not in depends_on and "policy-seed" not in depends_on, name
 
 
 def test_milvus_image_is_pinned_to_an_explicit_version():
@@ -70,8 +71,8 @@ def test_mcp_gets_milvus_uri_and_gemini_key_for_query_time_embedding():
 
     assert env["MILVUS_URI"] == "${MILVUS_URI:-http://milvus:19530}"
     assert env["GEMINI_API_KEY"] == "${GEMINI_API_KEY:-}"
-    # chờ policy-seed nếu profile rag bật, nhưng không bắt buộc khi profile tắt
-    assert mcp["depends_on"]["policy-seed"] == {"condition": "service_completed_successfully", "required": False}
+    # RAG tuỳ chọn và cô lập: mcp KHÔNG chờ policy-seed (seed lỗi vì thiếu khoá/Milvus chết không được làm sập mcp)
+    assert set(mcp["depends_on"]) == {"seed"}
     assert mcp["depends_on"]["seed"]["condition"] == "service_completed_successfully"
 
 

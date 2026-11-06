@@ -2,6 +2,7 @@
 # API chat cho web (service `chat`) cần khoá Gemini nên chỉ bật khi chọn profile: `docker compose --profile chat up`.
 # Hỏi đáp chính sách (RAG, xem docs/rag.md) cũng tuỳ chọn: `GEMINI_API_KEY=... docker compose --profile rag up` thêm Milvus
 # (`milvus`) và bước nạp tài liệu chính sách (`policy-seed`, cần khoá Gemini để tạo embedding); ghép được với `--profile chat`.
+# `mcp` khởi động độc lập với `policy-seed`: nạp lỗi thì chỉ `search_policies` báo lỗi (xem `docker compose --profile rag logs policy-seed`).
 # Mật khẩu dưới đây chỉ dành cho demo trên máy cá nhân; đổi bằng biến môi trường hoặc file .env.
 
 x-app: &app
@@ -48,13 +49,11 @@ services:
     depends_on:
       seed:
         condition: service_completed_successfully
-      policy-seed:
-        condition: service_completed_successfully
-        required: false  # chỉ chờ khi profile `rag` bật; không có profile thì bỏ qua
     environment:
       DATABASE_URL_READONLY: postgresql+psycopg2://knowledge_base_ro:${RO_PASSWORD:-demo-readonly}@db:5432/knowledge_base
       MCP_SERVER_HOST: 0.0.0.0
-      # Tool search_policies (tuỳ chọn): cần Milvus (profile `rag`) và khoá Gemini để nhúng câu hỏi; thiếu thì tool trả lỗi rõ ràng, các tool khác vẫn chạy.
+      # Tool search_policies (tuỳ chọn): cần Milvus (profile `rag`) và khoá Gemini để nhúng câu hỏi. `mcp` cố ý KHÔNG chờ `policy-seed`:
+      # khởi động độc lập; khi chưa nạp xong, hoặc `policy-seed` lỗi (thiếu khoá, Milvus chết, tài liệu sai), `search_policies` trả lỗi tiếng Việt rõ ràng và mọi tool khác vẫn chạy.
       MILVUS_URI: ${MILVUS_URI:-http://milvus:19530}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}  # phải trùng với model lúc nạp (policy-seed)
