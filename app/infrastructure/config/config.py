@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_chat_model: str = "gemini-3.5-flash-lite"
     gemini_base_url: str = ""  # để trống = máy chủ Gemini mặc định
+    gemini_embedding_model: str = "gemini-embedding-001"
+    policy_min_score: float = 0.0  # ngưỡng điểm tối thiểu khi tìm tài liệu chính sách; 0 = không lọc
     chat_log_dir: str = "chat_logs"
     # API chat cho website (SSE): bật/tắt bản demo, giới hạn câu hỏi/phiên và địa chỉ lắng nghe.
     chat_demo_enabled: bool = True

@@ -50,3 +50,11 @@ def test_chat_defaults(monkeypatch):
 def test_chat_demo_can_be_disabled_by_env(monkeypatch):
     monkeypatch.setenv("CHAT_DEMO_ENABLED", "false")
     assert Settings(_env_file=None).chat_demo_enabled is False
+
+
+def test_policy_rag_defaults(monkeypatch):
+    for name in ("GEMINI_EMBEDDING_MODEL", "POLICY_MIN_SCORE"):
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=None)
+    assert settings.gemini_embedding_model == "gemini-embedding-001"
+    assert settings.policy_min_score == 0.0
