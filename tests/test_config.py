@@ -67,3 +67,19 @@ def test_milvus_defaults(monkeypatch):
     assert settings.milvus_uri == "http://127.0.0.1:19530"
     assert settings.milvus_token == ""
     assert settings.milvus_collection == "policy_chunks"
+
+
+def test_policy_min_score_accepts_values_in_cosine_range(monkeypatch):
+    for value, expected in (("0", 0.0), ("-1", -1.0), ("1", 1.0), ("0.35", 0.35)):
+        monkeypatch.setenv("POLICY_MIN_SCORE", value)
+        assert Settings(_env_file=None).policy_min_score == expected
+
+
+def test_policy_min_score_outside_cosine_range_is_rejected(monkeypatch):
+    import pytest
+    from pydantic import ValidationError
+
+    for value in ("8", "1.01", "-1.5"):
+        monkeypatch.setenv("POLICY_MIN_SCORE", value)
+        with pytest.raises(ValidationError):
+            Settings(_env_file=None)

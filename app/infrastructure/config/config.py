@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,7 +16,7 @@ class Settings(BaseSettings):
     gemini_chat_model: str = "gemini-3.5-flash-lite"
     gemini_base_url: str = ""  # để trống = máy chủ Gemini mặc định
     gemini_embedding_model: str = "gemini-embedding-001"
-    policy_min_score: float = 0.0  # ngưỡng điểm tối thiểu khi tìm tài liệu chính sách; 0 = không lọc
+    policy_min_score: float = Field(0.0, ge=-1.0, le=1.0)  # ngưỡng điểm cosine tối thiểu khi tìm tài liệu chính sách; 0 = không lọc
     milvus_uri: str = "http://127.0.0.1:19530"  # máy chủ Milvus, hoặc đường dẫn file .db (Milvus Lite)
     milvus_token: str = ""
     milvus_collection: str = "policy_chunks"
