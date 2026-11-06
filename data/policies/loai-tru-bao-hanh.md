@@ -54,8 +54,8 @@ Lý do: những nguyên nhân này nằm ngoài tầm kiểm soát và ngoài ph
 
 Hao mòn tự nhiên là sự xuống cấp bình thường theo thời gian của lớp sơn khi sử dụng đúng cách. Hao mòn không được bảo hành vì nó không phải lỗi.
 
-1. Màu ngoại thất dần nhạt và bám bụi do nắng, mưa, khói bụi và khí hậu. Từ tháng thứ 12 trở đi, mức phai này không được bảo hành. Trong 12 tháng đầu, phai màu bất thường, ví dụ loang từng mảng, vẫn được xem xét như lỗi vật liệu hoặc thi công.
+1. Màu ngoại thất dần nhạt và bám bụi do nắng, mưa, khói bụi và khí hậu. Sau tháng thứ 12, mức phai này không được bảo hành. Trong 12 tháng đầu, phai màu bất thường, ví dụ loang từng mảng, vẫn được xem xét như lỗi vật liệu hoặc thi công.
 2. Lớp sơn nội thất ngả vàng nhẹ ở nơi nhiều khói bếp, khói nhang hoặc ánh sáng mạnh, và có vết bẩn ở vị trí tay chạm như quanh công tắc và tay nắm cửa.
 3. Mòn nhẹ bề mặt sàn epoxy ở lối xe đi lại nhiều, và bụi phấn nhẹ trên sơn ngoại thất lâu năm, lau sạch được.
 
-Lý do: không có lớp sơn nào giữ nguyên mãi. Tia cực tím và mưa làm hỏng dần liên kết trong màng sơn, đây là hiện tượng vật lý chứ không phải chất lượng kém. Tháng thứ 12 là mốc tách lỗi sớm do vật liệu hoặc thi công khỏi sự xuống cấp theo thời gian. Phần hao mòn có thể xử lý bằng sơn lại có tính phí theo báo giá riêng.
+Lý do: không có lớp sơn nào giữ nguyên mãi. Tia cực tím và mưa làm hỏng dần liên kết trong màng sơn, đây là hiện tượng vật lý chứ không phải chất lượng kém. Mốc sau tháng thứ 12 tách lỗi sớm do vật liệu hoặc thi công khỏi sự xuống cấp theo thời gian. Phần hao mòn có thể xử lý bằng sơn lại có tính phí theo báo giá riêng.

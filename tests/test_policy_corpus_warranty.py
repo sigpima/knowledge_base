@@ -90,6 +90,14 @@ def test_waterproofing_acceptance_matches_technical_rule(warranty):
     assert re.search(r"chống thấm[^.]*ngâm nước 48 giờ", body, re.IGNORECASE)
 
 
+def test_colour_fade_boundary_is_after_month_12(warranty):
+    """Ranh giới cố định: phai màu ngoại thất không được bảo hành SAU tháng thứ 12 (không phải từ tháng 12)."""
+    body = warranty["loai-tru-bao-hanh"].body.lower()
+    assert "sau tháng thứ 12" in body
+    assert "từ tháng thứ 12" not in body
+    assert "tháng thứ 12 trở đi" not in body
+
+
 @pytest.mark.parametrize("slug", sorted(EXPECTED))
 def test_word_count_in_range(warranty, slug):
     words = len(warranty[slug].body.split())
