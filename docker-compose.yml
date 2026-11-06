@@ -54,7 +54,9 @@ services:
       MCP_SERVER_HOST: 0.0.0.0
       # Tool search_policies (tuỳ chọn): cần Milvus (profile `rag`) và khoá Gemini để nhúng câu hỏi. `mcp` cố ý KHÔNG chờ `policy-seed`:
       # khởi động độc lập; khi chưa nạp xong, hoặc `policy-seed` lỗi (thiếu khoá, Milvus chết, tài liệu sai), `search_policies` trả lỗi tiếng Việt rõ ràng và mọi tool khác vẫn chạy.
-      MILVUS_URI: ${MILVUS_URI:-http://milvus:19530}
+      MILVUS_URI: http://milvus:19530  # cố định (như policy-seed): MILVUS_URI hướng host trong .env không được lọt vào container
+      MILVUS_COLLECTION: ${MILVUS_COLLECTION:-policy_chunks}  # phải trùng với collection lúc nạp (policy-seed)
+      POLICY_MIN_SCORE: ${POLICY_MIN_SCORE:-0.0}  # chỉ dùng lúc truy vấn
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}  # phải trùng với model lúc nạp (policy-seed)
     command: python main_mcp.py
@@ -92,6 +94,7 @@ services:
         condition: service_healthy
     environment:
       MILVUS_URI: http://milvus:19530
+      MILVUS_COLLECTION: ${MILVUS_COLLECTION:-policy_chunks}  # phải trùng với collection mà mcp truy vấn
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}  # đổi model thì phải nạp lại (vector gắn với model)
     command: python -m app.cli ingest-policies data/policies --prune

@@ -65,11 +65,41 @@ def test_policy_seed_waits_for_milvus_and_runs_the_idempotent_ingest():
     assert seed["image"] == SERVICES["seed"]["image"]  # dùng chung image ứng dụng
 
 
-def test_mcp_gets_milvus_uri_and_gemini_key_for_query_time_embedding():
+def test_milvus_uri_is_fixed_to_the_compose_network_for_both_services():
+    """Một MILVUS_URI hướng host (127.0.0.1) trong .env không được lọt vào container: ở đó nó trỏ vào chính container."""
+    for name in ("mcp", "policy-seed"):
+        assert SERVICES[name]["environment"]["MILVUS_URI"] == "http://milvus:19530", name
+
+
+def _default_of(value: str, name: str) -> str:
+    match = re.fullmatch(r"\$\{" + name + r":-([^}]*)\}", value)
+    assert match, f"{name}: {value!r} phải có dạng ${{{name}:-mặc định}}"
+    return match.group(1)
+
+
+def test_rag_knobs_are_passed_through_with_defaults_matching_settings(monkeypatch):
+    from app.infrastructure.config.config import Settings
+
+    for name in ("MILVUS_COLLECTION", "POLICY_MIN_SCORE"):
+        monkeypatch.delenv(name, raising=False)
+    defaults = Settings(_env_file=None)
+    mcp_env = SERVICES["mcp"]["environment"]
+    seed_env = SERVICES["policy-seed"]["environment"]
+
+    # collection phải thống nhất giữa nơi nạp và nơi truy vấn
+    for env in (mcp_env, seed_env):
+        assert _default_of(env["MILVUS_COLLECTION"], "MILVUS_COLLECTION") == defaults.milvus_collection
+    # ngưỡng điểm chỉ dùng lúc truy vấn
+    assert float(_default_of(mcp_env["POLICY_MIN_SCORE"], "POLICY_MIN_SCORE")) == defaults.policy_min_score
+    assert "POLICY_MIN_SCORE" not in seed_env
+    # demo Milvus không bật xác thực: token cố ý không đi vào container
+    assert "MILVUS_TOKEN" not in mcp_env and "MILVUS_TOKEN" not in seed_env
+
+
+def test_mcp_gets_gemini_key_for_query_time_embedding():
     mcp = SERVICES["mcp"]
     env = mcp["environment"]
 
-    assert env["MILVUS_URI"] == "${MILVUS_URI:-http://milvus:19530}"
     assert env["GEMINI_API_KEY"] == "${GEMINI_API_KEY:-}"
     # RAG tuỳ chọn và cô lập: mcp KHÔNG chờ policy-seed (seed lỗi vì thiếu khoá/Milvus chết không được làm sập mcp)
     assert set(mcp["depends_on"]) == {"seed"}

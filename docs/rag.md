@@ -56,7 +56,7 @@ docker compose --profile rag logs policy-seed           # xem kết quả nạp:
 - **Khoá Gemini cần ở cả `policy-seed` (nhúng tài liệu) lẫn `mcp` (nhúng câu hỏi lúc truy vấn).** Thiếu khoá thì `policy-seed` thoát mã 2 và
   `search_policies` trả `{"error": "Chưa cấu hình khoá Gemini ..."}`; `mcp` vẫn chạy và các tool khác không bị ảnh hưởng. Chưa nạp hoặc Milvus chưa chạy thì tool báo "Kho chính sách chưa được nạp hoặc không kết nối được".
 - Ngoài compose: `docker compose --profile rag up -d milvus`, rồi `MILVUS_URI=http://127.0.0.1:19530 GEMINI_API_KEY=... python -m app.cli ingest-policies data/policies --prune`
-  và chạy MCP với cùng hai biến. Biến cấu hình xem `.env.example`.
+  và chạy MCP với cùng hai biến. Biến cấu hình xem `.env.example`. `MILVUS_URI` kiểu host (`127.0.0.1`) chỉ dành cho chạy ngoài compose; các service trong compose luôn dùng `http://milvus:19530`.
 
 ### Khi `policy-seed` lỗi
 
@@ -67,13 +67,13 @@ Khắc phục: sửa nguyên nhân (ví dụ đặt `GEMINI_API_KEY` trong `.env
 
 ## Cấu hình
 
-| Biến | Mặc định | Ý nghĩa |
-|---|---|---|
-| `MILVUS_URI` | `http://127.0.0.1:19530` (compose: `http://milvus:19530`) | máy chủ Milvus (hoặc đường dẫn file `.db` cho Milvus Lite) |
-| `MILVUS_TOKEN` | rỗng | token nếu Milvus bật xác thực (demo không bật) |
-| `MILVUS_COLLECTION` | `policy_chunks` | tên collection |
-| `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | model embedding (vector 768 chiều) |
-| `POLICY_MIN_SCORE` | `0.0` | đoạn có `score` thấp hơn bị bỏ khỏi kết quả; `0.0` là không lọc |
+| Biến | Mặc định | Áp dụng | Ý nghĩa |
+|---|---|---|---|
+| `MILVUS_URI` | `http://127.0.0.1:19530` | chỉ host | máy chủ Milvus (hoặc đường dẫn file `.db` cho Milvus Lite). Compose **cố định** `http://milvus:19530` cho `mcp` và `policy-seed`, không đọc biến này |
+| `MILVUS_TOKEN` | rỗng | chỉ host | token nếu Milvus bật xác thực (demo không bật; compose cố ý không chuyển biến này vào container) |
+| `MILVUS_COLLECTION` | `policy_chunks` | compose và host | tên collection; compose chuyển cho cả `policy-seed` và `mcp`, hai nơi phải trùng |
+| `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | compose và host | model embedding (vector 768 chiều); `policy-seed` và `mcp` phải trùng |
+| `POLICY_MIN_SCORE` | `0.0` | compose (chỉ `mcp`) và host | đoạn có `score` thấp hơn bị bỏ khỏi kết quả; `0.0` là không lọc; hợp lệ trong [-1, 1] |
 
 - **Vector gắn với model.** Mỗi dòng lưu tên model đã nhúng và truy vấn chỉ tìm trong các dòng cùng model với embedder đang dùng. Đổi `GEMINI_EMBEDDING_MODEL`
   thì phải chạy lại `ingest-policies` (với compose: `docker compose --profile rag up policy-seed`), và đặt cùng giá trị cho `mcp`. Nếu quên, truy vấn không có hit nào
