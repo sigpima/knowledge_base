@@ -51,7 +51,7 @@ trên DB nào đó, hoặc `CREATE ROLE knowledge_base_ro LOGIN PASSWORD '...'`)
 - `main_mcp.py` – MCP server (streamable-http, cổng 8002), đúng 11 tool, kết nối bằng role Postgres **chỉ đọc**.
 - `scripts/` – sinh dữ liệu mẫu, seed, init DB, smoke test, client MCP tối giản.
 - `data/sample/` – 24 file YAML giả (được commit; phải khớp đầu ra của bộ sinh – có test).
-- `data/policy_eval.yaml` + `scripts/eval_retrieval.py` – bộ 28 câu hỏi đánh giá truy xuất chính sách và kịch bản đo (chưa chạy với model embedding thật; xem docs/rag.md).
+- `data/policy_eval.yaml` + `scripts/eval_retrieval.py` – bộ 28 câu hỏi đánh giá truy xuất chính sách và kịch bản đo (đã chạy với model thật ngày 2026-11-06, ngưỡng `POLICY_MIN_SCORE` mặc định 0.65; xem docs/rag.md).
 - `data/policies/` – 12 tài liệu chính sách giả (Markdown + front matter), nguồn của RAG.
 
 ## Quy ước

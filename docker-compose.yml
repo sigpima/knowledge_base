@@ -56,7 +56,7 @@ services:
       # khởi động độc lập; khi chưa nạp xong, hoặc `policy-seed` lỗi (thiếu khoá, Milvus chết, tài liệu sai), `search_policies` trả lỗi tiếng Việt rõ ràng và mọi tool khác vẫn chạy.
       MILVUS_URI: http://milvus:19530  # cố định (như policy-seed): MILVUS_URI hướng host trong .env không được lọt vào container
       MILVUS_COLLECTION: ${MILVUS_COLLECTION:-policy_chunks}  # phải trùng với collection lúc nạp (policy-seed)
-      POLICY_MIN_SCORE: ${POLICY_MIN_SCORE:-0.0}  # chỉ dùng lúc truy vấn
+      POLICY_MIN_SCORE: ${POLICY_MIN_SCORE:-0.65}  # chỉ dùng lúc truy vấn
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}  # phải trùng với model lúc nạp (policy-seed)
     command: python main_mcp.py

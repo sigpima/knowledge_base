@@ -73,13 +73,14 @@ Khắc phục: sửa nguyên nhân (ví dụ đặt `GEMINI_API_KEY` trong `.env
 | `MILVUS_TOKEN` | rỗng | chỉ host | token nếu Milvus bật xác thực (demo không bật; compose cố ý không chuyển biến này vào container) |
 | `MILVUS_COLLECTION` | `policy_chunks` | compose và host | tên collection; compose chuyển cho cả `policy-seed` và `mcp`, hai nơi phải trùng |
 | `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | compose và host | model embedding (vector 768 chiều); `policy-seed` và `mcp` phải trùng |
-| `POLICY_MIN_SCORE` | `0.0` | compose (chỉ `mcp`) và host | đoạn có `score` thấp hơn bị bỏ khỏi kết quả; `0.0` là không lọc; hợp lệ trong [-1, 1] |
+| `POLICY_MIN_SCORE` | `0.65` | compose (chỉ `mcp`) và host | đoạn có `score` thấp hơn bị bỏ khỏi kết quả; `0.0` là không lọc; hợp lệ trong [-1, 1]; `0.65` được đo trên `gemini-embedding-001` (xem "Đánh giá truy xuất") |
 
 - **Vector gắn với model.** Mỗi dòng lưu tên model đã nhúng và truy vấn chỉ tìm trong các dòng cùng model với embedder đang dùng. Đổi `GEMINI_EMBEDDING_MODEL`
   thì phải chạy lại `ingest-policies` (với compose: `docker compose --profile rag up policy-seed`), và đặt cùng giá trị cho `mcp`. Nếu quên, truy vấn không có hit nào
   cho model hiện tại trong khi kho còn dòng của model khác, và `search_policies` trả `{"error": "Kho chính sách được nạp bằng model embedding khác ..."}` (không nêu tên model) thay vì `passages` rỗng; kho trống hoặc không có đoạn nào đủ điểm vẫn trả `passages` rỗng, không lỗi.
-- **`POLICY_MIN_SCORE` chưa được hiệu chỉnh.** Mặc định 0.0 (không ngưỡng). Chưa có số đo trên model embedding thật vì lúc phát triển không có khoá Gemini; ngưỡng phù hợp
-  cần đo bằng kịch bản đánh giá (xem mục "Đánh giá truy xuất" bên dưới; chưa chạy trên model thật). Trước đó, bot dựa vào chỉ dẫn "kết quả không liên quan thì nói chưa tìm thấy" chứ không dựa vào ngưỡng điểm.
+- **`POLICY_MIN_SCORE` = 0,65 là ngưỡng bảo thủ, đo ngày 2026-11-06 trên `gemini-embedding-001` (768 chiều).** Với 28 câu đánh giá, ngưỡng này không cắt câu trong phạm vi
+  nào nhưng cũng chỉ chặn được khoảng một nửa câu ngoài phạm vi (câu gần chủ đề, ví dụ hỏi giá thùng sơn trên thị trường, vẫn lọt qua). Phần còn lại dựa vào chỉ dẫn của bot
+  ("kết quả không liên quan thì nói chưa tìm thấy"). Số liệu và giới hạn của phép đo ở mục "Đánh giá truy xuất". Đổi model embedding thì phải đo lại, vì thang điểm khác nhau.
 
 ## Thêm một tài liệu chính sách
 
@@ -103,9 +104,9 @@ Dữ liệu trong `data/policies/` là giả lập; đừng đưa quy định, t
 
 ## Đánh giá truy xuất
 
-**Trạng thái: bộ đánh giá đã có nhưng CHƯA được chạy với model embedding thật** (lúc phát triển không có khoá Gemini). Vì vậy chưa có số recall/MRR nào
-cho kho này, và `POLICY_MIN_SCORE` vẫn là `0.0` (chưa hiệu chỉnh). Test tự động chỉ chứng minh đường ống đúng (embedder băm không có ngữ nghĩa), không chứng minh
-chất lượng truy xuất.
+**Trạng thái: đã chạy một lần ngày 2026-11-06 với model thật** (`gemini-embedding-001`, 768 chiều; 68 chunk của 12 tài liệu; kho Milvus Lite, cùng điểm cosine như server).
+Kết quả ở mục "Kết quả lần chạy 2026-11-06" bên dưới. Test tự động vẫn chỉ chứng minh đường ống đúng (embedder băm không có ngữ nghĩa); chất lượng truy xuất
+chỉ đo được bằng kịch bản này với khoá thật.
 
 **Bộ câu hỏi** `data/policy_eval.yaml` gồm 28 câu tiếng Việt tự nhiên (cố ý không chép tiêu đề mục để đo khớp ngữ nghĩa chứ không khớp chữ): 20 câu một nguồn (mỗi tài liệu
 trong 12 tài liệu ít nhất một câu), 4 câu cần hai tài liệu, 4 câu ngoài phạm vi (`expect: null`, kho không có đáp án). Mỗi câu ghi `slug` và tiêu đề `##` chứa đáp án;
@@ -136,6 +137,47 @@ Quy ước: nếu recall@5 mức tài liệu dưới 0,8 thì coi là chưa đ�
 - Nếu hai nhóm **chồng lấn**, kịch bản không đưa ra số: mọi ngưỡng sẽ cắt nhầm câu đúng hoặc để lọt câu ngoài phạm vi. Hãy để `0.0` và dựa vào chỉ dẫn của bot ("kết quả không liên quan thì nói chưa tìm thấy").
 - Chỉ 4 câu ngoài phạm vi và 24 câu trong phạm vi là mẫu nhỏ; điểm cao nhất/thấp nhất là số cực trị nên nhạy với từng câu. Coi gợi ý là điểm khởi đầu, đừng coi là ngưỡng đã kiểm chứng. Đổi model embedding thì phải đo lại, vì thang điểm khác nhau.
 
+## Kết quả lần chạy 2026-11-06
+
+Model `gemini-embedding-001` (768 chiều), 68 chunk của 12 tài liệu, `top-k` = 5, 28 câu của `data/policy_eval.yaml` (24 trong phạm vi: 20 một nguồn + 4 hai nguồn; 4 ngoài phạm vi).
+
+| Số đo | Câu một nguồn (20) | Câu hai nguồn (4) |
+|---|---|---|
+| recall@1 mức tài liệu | 19/20 | 0/4 (không thể trúng: cần đủ hai tài liệu mà chỉ có 1 đoạn) |
+| recall@3 mức tài liệu | 20/20 | 2/4 |
+| recall@5 mức tài liệu | 20/20 | 4/4 |
+| recall@5 mức mục | 20/20 | 3/4 |
+| MRR | 0,975 | không áp dụng |
+
+Con số gộp mà `eval_retrieval` in ra: recall@1/3/5 mức tài liệu 0,792 / 0,917 / 1,000, MRR 0,873, recall@5 mức mục 0,958. **recall@1 gộp bị chặn trên ở 20/24 = 0,833**
+vì câu hai nguồn không thể trúng khi chỉ lấy 1 đoạn; muốn biết chất lượng thật, đọc cột "một nguồn". Câu duy nhất trượt ở hạng 1 là
+"Khách khiếu nại bong tróc thì bao lâu có người đến xem?": tài liệu đúng đứng hạng 2 với điểm 0,7324 so với 0,7348 của hạng 1 (kỳ vọng này đã được ghi chú là đáng bàn trong file).
+
+**Điểm cosine của đoạn hạng 1.** Câu trong phạm vi: thấp nhất 0,6638, trung vị 0,7638 (câu thấp thứ hai là 0,7019; phần lớn từ 0,73 trở lên).
+Câu ngoài phạm vi: 0,6955 (giá sơn trên thị trường), 0,6505 (nghỉ phép), 0,5980 (giấy phép xây dựng), 0,5923 (gia cố xà gồ mái); trung vị 0,6242.
+Hai nhóm chồng lấn nhẹ (nên kịch bản không tự gợi ý số), vì vậy bảng dưới đây quét ngưỡng `t` để chọn thủ công:
+
+| `t` | câu trong phạm vi bị loại hẳn (top-1 < t) | câu ngoài phạm vi lọt qua (top-1 ≥ t) | đoạn đúng bị cắt |
+|---|---|---|---|
+| 0,60 | 0/24 | 2/4 | 0/28 |
+| 0,65 | 0/24 | 2/4 | 0/28 |
+| 0,66 | 0/24 | 1/4 | 0/28 |
+| 0,68 | 1/24 | 1/4 | 1/28 |
+| 0,70 | 1/24 | 0/4 | 3/28 |
+| 0,72 | 2/24 | 0/4 | 4/28 |
+| 0,74 | 5/24 | 0/4 | 8/28 |
+
+**Vì sao chọn 0,65.** Bỏ sót một câu chính sách hợp lệ (bot nói "chưa tìm thấy" dù có quy định) tệ hơn để lọt một câu ngoài phạm vi (bot vẫn tự đánh giá đoạn có liên quan hay không).
+Ở 0,65 không câu trong phạm vi nào bị loại và không đoạn đúng nào bị cắt, còn chừa khoảng 0,014 dưới điểm thấp nhất trong phạm vi (0,6638). 0,66 chặn thêm một câu ngoài phạm vi nhưng chỉ cách
+câu đúng yếu nhất 0,004; 0,70 chặn sạch cả 4 câu ngoài phạm vi nhưng loại hẳn 1/24 câu đúng và cắt 3/28 đoạn đúng.
+
+**Giới hạn của phép đo, nói thẳng.**
+- Chỉ có 4 câu ngoài phạm vi; ngưỡng dựa vào 4 điểm. Câu gần chủ đề nhất (giá sơn trên thị trường, 0,6955) vẫn lọt qua ở mọi ngưỡng dưới 0,70. Nên thêm ít nhất vài chục câu ngoài phạm vi trước khi tăng ngưỡng.
+- Điểm thấp nhất trong phạm vi (0,6638, câu về gia hạn bảo hành và khoản giữ lại) là một ngoại lệ; hai câu thấp kế tiếp đã là 0,7019 và 0,7348. Khoảng chừa 0,014 vì thế mong manh với câu hỏi phrasing khác.
+- Đo một lần, một model; đổi `GEMINI_EMBEDDING_MODEL` thì đo lại.
+- Khi chạy trên file Milvus Lite đã nạp từ tiến trình trước, collection ở trạng thái `released` và store chỉ đọc không tự nạp lại (lỗi code 101 khi tìm); lần chạy này nạp collection bằng một đoạn
+  mã bọc tạm bên ngoài repo. Trên Milvus server, trạng thái đã nạp được giữ qua lần khởi động lại (đã kiểm ở bước kiểm tra Docker).
+
 ## Giới hạn và bảo mật (nói thẳng)
 
 - **Chỉ đọc nằm ở mã, không phải ở Milvus.** MCP mở kho với `read_only=True` và `MilvusPolicyStore` từ chối mọi thao tác ghi ở chế độ này. Khác với Postgres (role chỉ đọc do DB ép),
@@ -147,5 +189,5 @@ Quy ước: nếu recall@5 mức tài liệu dưới 0,8 thì coi là chưa đ�
 ## Kiểm tra
 
 Test dùng **Milvus Lite** (file `.db` cục bộ, không cần Docker) cùng embedder giả tất định, nên không cần khoá hay Milvus thật: `pytest -q` (cài `requirements-dev.txt`; nếu Milvus Lite không chạy được trên máy,
-các test liên quan tự bỏ qua). Cấu hình compose được kiểm tra tĩnh bằng `tests/test_compose_rag.py`. Khi viết tài liệu này, service `milvus` đã được chạy thật (nạp, tìm kiếm, khởi động lại container),
-nhưng bước `policy-seed` và việc nhúng bằng Gemini thật chưa được chạy đầu cuối vì không có khoá.
+các test liên quan tự bỏ qua). Cấu hình compose được kiểm tra tĩnh bằng `tests/test_compose_rag.py`. Đã chạy đầu cuối ngày 2026-11-06 trên Docker thật: `docker compose --profile rag up -d --build` (Milvus healthy, `policy-seed` nạp 12 tài liệu / 68 chunk bằng Gemini thật,
+thoát mã 0), `search_policies` qua MCP cổng 8002 trả đúng tài liệu, và sau khi khởi động lại container `milvus` tìm kiếm vẫn chạy ngay. Service `chat` (profile `chat`) chưa được chạy cùng RAG.

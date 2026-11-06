@@ -106,7 +106,7 @@ python -m app.cli ingest-policies data/policies --prune     # nạp lại ngoài
 ```
 
 Kho vector nằm trong volume `milvus_data` (`docker compose down -v` xoá nó). Milvus ở bản demo không có xác thực nên cổng chỉ mở trên `127.0.0.1`.
-Kiến trúc, cách thêm tài liệu mới, cấu hình và các giới hạn (ngưỡng điểm chưa hiệu chỉnh): [docs/rag.md](docs/rag.md).
+Kiến trúc, cách thêm tài liệu mới, cấu hình và các giới hạn (kết quả đo truy xuất và ngưỡng điểm 0,65): [docs/rag.md](docs/rag.md).
 
 ## Chat ngay trong terminal (Gemini)
 

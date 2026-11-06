@@ -57,7 +57,7 @@ def test_policy_rag_defaults(monkeypatch):
         monkeypatch.delenv(name, raising=False)
     settings = Settings(_env_file=None)
     assert settings.gemini_embedding_model == "gemini-embedding-001"
-    assert settings.policy_min_score == 0.0
+    assert settings.policy_min_score == 0.65
 
 
 def test_milvus_defaults(monkeypatch):
