@@ -111,8 +111,16 @@ def ingest_policies(paths: list[str], prune: bool = False) -> int:
         return 1
 
     # Import muộn: `google-genai` chỉ có trong requirements-chat.txt, lệnh `ingest` không được phụ thuộc vào nó.
-    from app.domains.policy.infrastructure.embedding.gemini import build_embedder
-    from app.domains.policy.infrastructure.vectorstore.milvus_store import build_milvus_store
+    try:
+        from app.domains.policy.infrastructure.embedding.gemini import build_embedder
+        from app.domains.policy.infrastructure.vectorstore.milvus_store import build_milvus_store
+    except ImportError:
+        print(
+            "Lỗi: thiếu gói cần thiết để nạp chính sách (google-genai, pymilvus); "
+            "cài requirements.txt và requirements-chat.txt rồi chạy lại.",
+            file=sys.stderr,
+        )
+        return 2
 
     try:
         embedder = build_embedder(settings.gemini_api_key, settings.gemini_embedding_model, settings.gemini_base_url)

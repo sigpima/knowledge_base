@@ -28,6 +28,7 @@ _ERR_MODEL_DRIFT = (
     "Kho chính sách được nạp bằng model embedding khác với model đang dùng để tìm kiếm, nên không tìm được đoạn nào. "
     "Cần chạy lại ingest-policies (nạp lại tài liệu) với đúng model đang cấu hình."
 )
+_ERR_MISSING_PACKAGE = "Máy chủ thiếu gói cần thiết cho tìm kiếm chính sách; xem docs/rag.md."
 _ERR_UNEXPECTED = "Tìm kiếm chính sách gặp lỗi không mong đợi."
 
 
@@ -85,6 +86,9 @@ class PolicySearchService:
         except PolicyStoreError:
             logger.warning("Kho chính sách lỗi khi tìm kiếm", exc_info=True)
             return {"error": _ERR_STORE}
+        except ImportError:
+            logger.warning("Thiếu gói cho search_policies", exc_info=True)
+            return {"error": _ERR_MISSING_PACKAGE}
         except Exception:  # noqa: BLE001 - biên của tool: lỗi lạ phải thành thông báo chung, không làm sập phiên MCP
             logger.warning("search_policies gặp lỗi không mong đợi", exc_info=True)
             return {"error": _ERR_UNEXPECTED}

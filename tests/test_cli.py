@@ -347,6 +347,33 @@ def test_ingest_policies_replace_document_failure_exits_1_keeps_going_and_skips_
     assert policy_env.store.get_document_meta("khong-xoa") is not None
 
 
+@pytest.mark.parametrize(
+    "module",
+    [
+        "app.domains.policy.infrastructure.embedding.gemini",
+        "app.domains.policy.infrastructure.vectorstore.milvus_store",
+    ],
+)
+def test_ingest_policies_missing_package_exits_2_with_a_clean_message_before_any_write(
+    policy_env, tmp_path, capsys, monkeypatch, module
+):
+    import sys
+
+    monkeypatch.setitem(sys.modules, module, None)  # import báo ImportError như khi chưa cài gói
+    _seed_old(policy_env, "con-lai")
+    _write_policy(tmp_path, "a.md", "tai-lieu-a")
+
+    code = main(["ingest-policies", str(tmp_path), "--prune"])
+
+    assert code == 2
+    err = capsys.readouterr().err
+    assert "requirements-chat.txt" in err and "Traceback" not in err
+    assert "tai-lieu-a" not in err
+    assert policy_env.embedder.calls == []
+    assert policy_env.store.get_document_meta("tai-lieu-a") is None
+    assert policy_env.store.get_document_meta("con-lai") is not None
+
+
 def test_import_app_cli_does_not_import_gemini_sdk():
     code = "import sys, app.cli; bad = [m for m in sys.modules if m == 'google.genai' or m.startswith('google.genai.')]; assert not bad, bad"
     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=Path(__file__).parent.parent)

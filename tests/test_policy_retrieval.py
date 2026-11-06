@@ -298,6 +298,25 @@ def test_failures_become_vietnamese_errors_without_secrets(embedder_error, store
     assert not any(secret in result["error"] for secret in SECRETS)
 
 
+@pytest.mark.parametrize("where", ["embedder", "store"])
+def test_missing_package_gets_its_own_fixed_message_without_the_module_path(where):
+    leaky = ImportError("No module named 'google.genai' in /var/data/secret.db")
+
+    def boom():
+        raise leaky
+
+    embedder_factory = boom if where == "embedder" else HashingEmbedder
+    store_factory = boom if where == "store" else (lambda: FixedStore([passage()]))
+    service = PolicySearchService(store_factory, embedder_factory)
+
+    result = service.search("bảo hành")
+
+    assert set(result) == {"error"}
+    assert "thiếu gói cần thiết" in result["error"] and "docs/rag.md" in result["error"]
+    assert "không mong đợi" not in result["error"]
+    assert "google" not in result["error"] and "secret" not in result["error"]
+
+
 def test_factory_failures_are_reported_the_same_way_and_retried():
     attempts = []
 
