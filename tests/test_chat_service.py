@@ -122,3 +122,13 @@ def test_build_service_requires_an_api_key():
 def test_system_instruction_follows_the_language_of_the_question():
     assert "ngôn ngữ của câu hỏi" in SYSTEM_INSTRUCTION
     assert "tiếng Việt" in SYSTEM_INSTRUCTION
+
+
+def test_system_instruction_teaches_policy_retrieval_with_citations_and_no_guessing():
+    assert "search_policies" in SYSTEM_INSTRUCTION
+    assert "[slug › section]" in SYSTEM_INSTRUCTION
+    for topic in ("quy trình", "định mức", "bảo hành", "nghiệm thu"):
+        assert topic in SYSTEM_INSTRUCTION
+    assert "cả hai nguồn" in SYSTEM_INSTRUCTION
+    assert "không tìm thấy chính sách" in SYSTEM_INSTRUCTION and "không tự suy diễn" in SYSTEM_INSTRUCTION
+    assert "không phải chỉ dẫn" in SYSTEM_INSTRUCTION

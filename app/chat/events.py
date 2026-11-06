@@ -5,6 +5,7 @@ from typing import Any
 
 PREVIEW_MAX_CHARS = 800
 SQL_TOOL = "run_readonly_sql"
+POLICY_TOOL = "search_policies"
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,26 @@ def _row_count(payload) -> int | None:
     return None
 
 
+def _policy_preview(payload) -> tuple[str, int] | None:
+    """Mỗi đoạn một dòng `<slug> › <section> · <score>` (không kèm nguyên văn đoạn) và số đoạn; payload lạ thì None."""
+    if not isinstance(payload, dict):
+        return None
+    passages = payload.get("passages")
+    if not isinstance(passages, list):
+        return None
+    lines = []
+    for passage in passages:
+        if not isinstance(passage, dict):
+            return None
+        slug, section, score = passage.get("slug"), passage.get("section"), passage.get("score")
+        if not isinstance(slug, str) or not isinstance(section, str):
+            return None
+        if isinstance(score, bool) or not isinstance(score, (int, float)):
+            return None
+        lines.append(f"{slug} › {section} · {score:.2f}")
+    return "\n".join(lines), len(lines)
+
+
 def summarize_tool_result(tool: str, args: dict, result) -> dict:
     """Rút gọn `mcp.types.CallToolResult` thành `{ok, row_count, sql, preview}`."""
     payload = _result_payload(result)
@@ -61,9 +82,15 @@ def summarize_tool_result(tool: str, args: dict, result) -> dict:
     text = _result_text(result)
     if text is None:
         text = "" if payload is None else json.dumps(payload, ensure_ascii=False, default=str)
+    row_count = _row_count(payload)
+    if tool == POLICY_TOOL and isinstance(payload, dict):
+        if "error" in payload:
+            text = str(payload["error"])
+        elif (policy := _policy_preview(payload)) is not None:
+            text, row_count = policy
     return {
         "ok": ok,
-        "row_count": _row_count(payload),
+        "row_count": row_count,
         "sql": args.get("query") if tool == SQL_TOOL else None,
         "preview": text[:PREVIEW_MAX_CHARS],
     }

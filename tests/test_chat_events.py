@@ -3,7 +3,7 @@ import json
 
 from mcp.types import CallToolResult, TextContent
 
-from app.chat.events import ChatEvent, summarize_tool_result
+from app.chat.events import POLICY_TOOL, PREVIEW_MAX_CHARS, ChatEvent, summarize_tool_result
 
 
 def _result(payload, is_error: bool = False) -> CallToolResult:
@@ -73,3 +73,56 @@ def test_structured_content_wrapped_in_result_key_is_unwrapped():
         is_error=False,
     )
     assert summarize_tool_result("run_readonly_sql", {"query": "q"}, failed)["ok"] is False
+
+
+def _passage(slug: str, section: str, score, text: str = "Nội dung rất dài của đoạn chính sách."):
+    return {"slug": slug, "title": "Tiêu đề", "doc_type": "technical", "section": section, "text": text, "score": score}
+
+
+def test_policy_preview_is_one_citation_line_per_passage_without_text():
+    payload = {
+        "passages": [_passage("quy-trinh-son", "Chuẩn bị bề mặt", 0.8765), _passage("bao-hanh", "Thời hạn > Nội thất", 0.5)],
+        "row_count": 2,
+    }
+    summary = summarize_tool_result(POLICY_TOOL, {"query": "câu hỏi riêng tư"}, _result(payload))
+    assert POLICY_TOOL == "search_policies"
+    assert summary["ok"] is True
+    assert summary["row_count"] == 2
+    assert summary["sql"] is None
+    assert summary["preview"] == "quy-trinh-son › Chuẩn bị bề mặt · 0.88\nbao-hanh › Thời hạn > Nội thất · 0.50"
+    assert "Nội dung rất dài" not in summary["preview"]
+    assert "riêng tư" not in json.dumps(summary, ensure_ascii=False)
+
+
+def test_policy_preview_is_cut_to_the_limit():
+    payload = {"passages": [_passage(f"slug-{i}", "m" * 100, 0.9) for i in range(30)], "row_count": 30}
+    summary = summarize_tool_result(POLICY_TOOL, {"query": "q"}, _result(payload))
+    assert len(summary["preview"]) == PREVIEW_MAX_CHARS
+    assert summary["row_count"] == 30
+
+
+def test_policy_empty_result_has_zero_rows_and_empty_preview():
+    summary = summarize_tool_result(POLICY_TOOL, {"query": "q"}, _result({"passages": [], "row_count": 0}))
+    assert summary["ok"] is True
+    assert summary["row_count"] == 0
+    assert summary["preview"] == ""
+
+
+def test_policy_error_is_not_ok_and_previews_the_message():
+    summary = summarize_tool_result(POLICY_TOOL, {"query": "q"}, _result({"error": "Kho chính sách chưa được nạp."}))
+    assert summary["ok"] is False
+    assert summary["row_count"] is None
+    assert summary["sql"] is None
+    assert summary["preview"] == "Kho chính sách chưa được nạp."
+
+    long_error = summarize_tool_result(POLICY_TOOL, {"query": "q"}, _result({"error": "e" * 5000}))
+    assert len(long_error["preview"]) == PREVIEW_MAX_CHARS
+
+
+def test_policy_malformed_payloads_fall_back_to_generic_summary():
+    for payload in ({"passages": "không phải list"}, {"row_count": 1}, ["a", "b"], "văn bản thường",
+                    {"passages": [None, "x", {"slug": "chỉ-slug"}], "row_count": 3}):
+        summary = summarize_tool_result(POLICY_TOOL, {"query": "q"}, _result(payload))
+        assert summary["sql"] is None
+        assert isinstance(summary["preview"], str)
+        assert len(summary["preview"]) <= PREVIEW_MAX_CHARS
