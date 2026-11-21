@@ -1,0 +1,50 @@
+# Build image trên GitHub Actions và đẩy lên ghcr mỗi khi push lên `main`, gắn hai tag:
+#   - `latest`        : server mặc định dùng tag này (docker compose pull);
+#   - `sha-<7 ký tự>` : tag bất biến theo commit, dùng để ghim/rollback (IMAGE_TAG=sha-abc1234 trong .env của server).
+# Xem docker-compose.prod.yml.
+name: image
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:  # đổi những thứ không nằm trong image thì khỏi build lại
+      - "docs/**"
+      - "tests/**"
+      - "**.md"
+      - "docker-compose*.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # amd64; server triển khai cũng phải là amd64 (thêm linux/arm64 vào platforms nếu cần)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
