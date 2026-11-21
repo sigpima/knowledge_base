@@ -23,7 +23,11 @@ GEMINI_API_KEY=... docker compose --profile chat up -d   # thêm service `chat` 
 GEMINI_API_KEY=... docker compose --profile rag up -d    # RAG chính sách: thêm `milvus` + `policy-seed` (nạp data/policies); ghép được với --profile chat
 python -m app.cli ingest-policies data/policies --prune   # nạp tài liệu chính sách vào Milvus (cần MILVUS_URI, GEMINI_API_KEY); mã thoát 0/1/2
 python -m scripts.eval_retrieval [--top-k 5]   # đo recall/MRR truy xuất chính sách bằng data/policy_eval.yaml (cần GEMINI_API_KEY + Milvus đã nạp); mã thoát 0/2
+./update.sh                               # TRÊN SERVER (deploy/update.sh): kéo image mới từ ghcr, up -d --wait; `./update.sh sha-abc1234` để rollback
 ```
+
+Triển khai theo chuẩn chung (~/.claude/CLAUDE.md): push `main` → `.github/workflows/image.yml` (test → build → `latest` + `sha-xxxxxxx` lên ghcr). `docker-compose.prod.yml` là override cho server
+(image ghcr, restart, volume, xoay log, `api` sau profile `ingest`, mạng `kb-net`); mẫu `.env` cho server là `deploy/prod.env.example`. Xem README, mục "Triển khai lên server".
 
 Test (Postgres thật, bắt buộc đặt biến môi trường, không có giá trị mặc định):
 

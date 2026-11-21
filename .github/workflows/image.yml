@@ -1,26 +1,65 @@
-# Build image trên GitHub Actions và đẩy lên ghcr mỗi khi push lên `main`, gắn hai tag:
-#   - `latest`        : server mặc định dùng tag này (docker compose pull);
-#   - `sha-<7 ký tự>` : tag bất biến theo commit, dùng để ghim/rollback (IMAGE_TAG=sha-abc1234 trong .env của server).
-# Xem docker-compose.prod.yml.
+# Chuẩn triển khai chung: push main -> test -> build -> ghcr.io/<owner>/<repo> với hai tag `latest` và `sha-<7 ký tự>`.
+#   - server mặc định dùng `latest`; ghim/rollback bằng tag sha (IMAGE_TAG trong .env, hoặc `./update.sh sha-abc1234`).
+#   - test phải xanh mới build/publish: main hỏng không được phép thành `latest`.
+# Xem docker-compose.prod.yml và deploy/update.sh.
 name: image
 
 on:
   push:
     branches: [main]
-    paths-ignore:  # đổi những thứ không nằm trong image thì khỏi build lại
-      - "docs/**"
-      - "tests/**"
-      - "**.md"
-      - "docker-compose*.yml"
   workflow_dispatch:
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false  # không bao giờ huỷ job đang publish giữa chừng
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # amd64; server triển khai cũng phải là amd64 (thêm linux/arm64 vào platforms nếu cần)
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: knowledge_base_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d knowledge_base_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/knowledge_base_test
+      TEST_DATABASE_URL_READONLY: postgresql+psycopg2://knowledge_base_ro:ro-pass@localhost:5432/knowledge_base_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"  # khớp image (Dockerfile)
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      # Test cần role chỉ đọc có sẵn (conftest chỉ cấp quyền SELECT trên schema test).
+      - name: Create read-only role
+        run: psql "postgresql://postgres:postgres@localhost:5432/knowledge_base_test" -c "CREATE ROLE knowledge_base_ro LOGIN PASSWORD 'ro-pass'"
+
+      - run: python -m pytest -q
+
+      - name: Scrub check
+        run: python scripts/check_scrub.py
+
+  image:
+    needs: [test]
+    runs-on: ubuntu-latest  # amd64; server triển khai cũng phải là amd64
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -35,10 +74,10 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}  # tự viết thường
           tags: |
             type=raw,value=latest
-            type=sha
+            type=sha,prefix=sha-,format=short
 
       - uses: docker/build-push-action@v6
         with:
@@ -46,5 +85,17 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}  # gắn package với repo
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Tóm tắt
+        run: |
+          {
+            echo "### Image đã đẩy"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo "Triển khai: trên server chạy \`./update.sh\` (hoặc \`./update.sh sha-${GITHUB_SHA::7}\` cho đúng bản build này)."
+          } >> "$GITHUB_STEP_SUMMARY"

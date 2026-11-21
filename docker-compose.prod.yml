@@ -1,25 +1,33 @@
-# Override cho máy chủ thật, ghép với docker-compose.yml:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# hoặc đặt trong .env trên server (khi đó chỉ cần `docker compose up -d`):
-#   COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml
-#   COMPOSE_PROFILES=chat
-#   IMAGE_TAG=latest   # có thể bỏ (mặc định latest); ghim/rollback theo commit: IMAGE_TAG=sha-abc1234
-# Cập nhật: `docker compose pull && docker compose up -d`.
+# Override cho máy chủ thật, ghép với docker-compose.yml (chuẩn triển khai chung: GitHub Actions -> ghcr -> deploy/update.sh).
+# Trên server, trong ~/knowledge-base/ chỉ cần: docker-compose.yml, docker-compose.prod.yml, update.sh và .env (mẫu: deploy/prod.env.example).
+# `.env` đặt COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml nên mọi lệnh `docker compose ...` tự ghép hai file.
+#
+#   cập nhật:  ./update.sh                  (kéo :latest rồi khởi động lại, đợi healthy)
+#   rollback:  ./update.sh sha-abc1234      (tag sha xem ở GitHub -> Packages)
 #
 # Khác với bản demo:
 #   - dùng image dựng sẵn từ ghcr (workflow .github/workflows/image.yml), không build trên server (cần Docker Compose >= 2.24 cho `!reset`);
-#   - db và mcp có restart (server khởi động lại thì tự lên), Postgres có volume;
-#   - `api` (ingest, có quyền ghi) nằm sau profile `ingest`, không chạy mặc định;
+#   - db, mcp (và api, milvus nếu bật) có restart (server khởi động lại thì tự lên), Postgres có volume, log được xoay;
+#   - `api` (ingest, có quyền ghi, cổng 8000 trùng media_tool) nằm sau profile `ingest`, không chạy mặc định; đừng bật trên server dùng chung;
 #   - mạng có tên cố định `kb-net` để backend khác trên cùng máy nối vào (http://chat:8003, http://mcp:8002/mcp) mà không cần mở cổng host.
 # Cổng host vẫn chỉ bind 127.0.0.1 (khai báo ở docker-compose.yml); đừng phơi 8002 (MCP không xác thực) ra internet.
 # Lưu ý: `seed` xoá và nạp lại dữ liệu mẫu mỗi lần `up`, nên mỗi lần triển khai có vài giây dữ liệu trống.
 # Lưu ý: `chat` giữ một phiên MCP; nếu `mcp` tự crash rồi được Docker bật lại thì chạy `docker compose restart mcp chat`.
+# Lưu ý: với profile `rag`, nếu `policy-seed` thoát lỗi (thiếu khoá Gemini, Milvus chết) thì `update.sh` báo thất bại
+#        (xem `docker compose logs policy-seed`); `mcp` vẫn chạy bình thường, chỉ `search_policies` trả lỗi.
 
 x-image: &image ghcr.io/sigpima/knowledge_base:${IMAGE_TAG:-latest}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
   db:
     restart: unless-stopped
+    logging: *logging
     volumes:
       - pgdata:/var/lib/postgresql/data  # POSTGRES_PASSWORD chỉ có tác dụng lần khởi tạo đầu; đổi sau này phải `down -v`
   seed:
@@ -29,13 +37,20 @@ services:
     image: *image
     build: !reset null
     profiles: ["ingest"]
+    restart: unless-stopped
+    logging: *logging
   mcp:
     image: *image
     build: !reset null
     restart: unless-stopped
+    logging: *logging
   chat:
     image: *image
     build: !reset null
+    logging: *logging
+  milvus:
+    restart: unless-stopped
+    logging: *logging
   policy-seed:
     image: *image
     build: !reset null

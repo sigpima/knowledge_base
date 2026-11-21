@@ -257,6 +257,36 @@ Test chạy trên Postgres thật; thiếu hai biến môi trường trên thì 
 phải tồn tại sẵn (ví dụ `CREATE ROLE knowledge_base_ro LOGIN PASSWORD 'PASS'`); test tự cấp quyền `SELECT` trên schema test.
 Chi tiết quy ước code: [CLAUDE.md](CLAUDE.md). Kiểm tra stack Docker từ đầu đến cuối: `scripts/smoke_compose.sh`.
 
+## Triển khai lên server
+
+Quy trình chung: GitHub Actions build image, lưu ở ghcr, trên server chạy `./update.sh`. Server không build và không cần clone repo.
+
+```
+push main ─► Actions: test ─► build ─► ghcr.io/<owner>/<repo>:latest + :sha-abc1234
+server:      ./update.sh  =  docker compose pull  +  docker compose up -d --wait
+```
+
+Cài một lần:
+
+1. Server cần Docker và Docker Compose từ 2.24 trở lên (file prod dùng `!reset`), firewall chỉ mở 22/80/443.
+2. Sau lần chạy Actions đầu tiên, package `knowledge_base` mặc định ở chế độ private. Đổi sang Public (image chỉ chứa dữ liệu giả, không có bí mật)
+   ở GitHub → Packages → Package settings, hoặc trên server chạy `docker login ghcr.io` với PAT chỉ có quyền `read:packages`.
+3. Đưa file lên `~/knowledge-base/` (đúng 4 file; `.env` lấy từ file mẫu):
+
+   ```bash
+   scp docker-compose.yml docker-compose.prod.yml deploy/update.sh you@server:~/knowledge-base/
+   scp deploy/prod.env.example you@server:~/knowledge-base/.env
+   ssh you@server 'cd knowledge-base && chmod 600 .env && chmod +x update.sh'   # rồi sửa .env: mật khẩu, GEMINI_API_KEY
+   ```
+
+4. Trên server: `./update.sh`. Mặc định chạy `db`, `seed` (nạp dữ liệu mẫu rồi thoát), `mcp` và `chat`; service ingest (`api`) nằm sau profile `ingest` và không bật.
+
+Cập nhật: `./update.sh`. Rollback hoặc ghim một bản: `./update.sh sha-abc1234` (tag sha xem ở GitHub → Packages; muốn giữ lâu thì đặt `IMAGE_TAG` trong `.env`).
+Nếu một service không healthy, script in log gần nhất rồi thoát mã 1; service đang chạy giữ nguyên bản cũ khi lỗi xảy ra ở bước pull.
+
+Nối vào web: backend của bạn gọi `chat` ở `127.0.0.1:8003` (cùng máy) hoặc `http://chat:8003` qua mạng Docker `kb-net`, rồi chuyển tiếp SSE về trình duyệt.
+Đừng mở cổng 8002 (MCP không xác thực) ra internet. Nếu phơi `chat` ra web trực tiếp thì cần nginx có HTTPS, `limit_req`, CORS theo domain của bạn và `proxy_buffering off`.
+
 ## Giới hạn và hướng phát triển
 
 - **Chỉ có bot terminal, chưa có giao diện web.** Bot cần khoá Gemini; bốn ví dụ trong `docs/examples/` được một agent Claude trả lời qua

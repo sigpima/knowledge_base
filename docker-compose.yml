@@ -41,6 +41,12 @@ services:
       DATABASE_URL: postgresql+psycopg2://postgres:${POSTGRES_PASSWORD:-demo-password}@db:5432/knowledge_base
       API_HOST: 0.0.0.0  # trong container; cổng host vẫn chỉ mở trên 127.0.0.1 (xem ports)
     command: python main.py
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     ports:
       - "127.0.0.1:8000:8000"
 
@@ -60,6 +66,12 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}  # phải trùng với model lúc nạp (policy-seed)
     command: python main_mcp.py
+    healthcheck:  # chỉ kiểm tra cổng đã nhận kết nối (MCP là streamable-http, không có endpoint /health)
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8002), timeout=3).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     ports:
       - "127.0.0.1:8002:8002"
 
@@ -105,7 +117,7 @@ services:
     profiles: ["chat"]  # không chạy với `docker compose up` thường; bật bằng `--profile chat` hoặc COMPOSE_PROFILES=chat
     depends_on:
       mcp:
-        condition: service_started
+        condition: service_healthy  # chờ cổng MCP mở rồi mới nối (main_chat.py thoát nếu nối MCP lỗi)
         restart: true  # phiên MCP của chat là có trạng thái: mcp khởi động lại (qua compose) thì chat khởi động lại theo
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}  # khoá Gemini lấy từ môi trường máy chủ/.env, không có giá trị mặc định
@@ -119,6 +131,12 @@ services:
       CHAT_SESSION_TTL_SECONDS: ${CHAT_SESSION_TTL_SECONDS:-1800}
       CHAT_MAX_SESSIONS: ${CHAT_MAX_SESSIONS:-200}
     command: python main_chat.py
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8003/chat/status', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     ports:
       - "127.0.0.1:8003:8003"
     restart: unless-stopped
